@@ -117,6 +117,10 @@ func BuildReport(sdkStructs []sdk.SDKStruct, allow allowlist.Allowlist) (Report,
 		}
 
 		if len(target.SDKStructs) == 0 {
+			if coverage, ok := responseBodyCoverageForTarget(target.Name); ok {
+				report.Structs = append(report.Structs, newResponseBodyStructReport(serviceName, target.Name, coverage))
+				continue
+			}
 			reason := "Generated API surface has no mapped SDK payloads in the validator target registry."
 			if reviewed := reviewedUntrackedReason(target.Name); reviewed != "" {
 				reason = reviewed

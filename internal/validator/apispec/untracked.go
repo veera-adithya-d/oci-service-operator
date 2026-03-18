@@ -4,14 +4,7 @@ import "strings"
 
 const intentionalUntrackedPrefix = "Intentionally untracked: "
 
-var reviewedUntrackedReasons = map[string]string{
-	"CoreConsoleHistoryContent":        scalarContentReason("the SDK only returns plain-text console history content"),
-	"CoreCpeDeviceConfigContent":       binaryContentReason("the SDK only returns binary CPE device config content"),
-	"CoreIpsecCpeDeviceConfigContent":  binaryContentReason("the SDK only returns binary IPSec CPE device config content"),
-	"CoreTunnelCpeDeviceConfigContent": binaryContentReason("the SDK only returns binary tunnel CPE device config content"),
-	"DNSZoneContent":                   binaryContentReason("the SDK only returns streamed zone-file content"),
-	"NotificationUnsubscription":       scalarContentReason("the SDK only returns plain-text unsubscription content"),
-}
+var reviewedUntrackedReasons = map[string]string{}
 
 func reviewedUntrackedReason(targetName string) string {
 	return reviewedUntrackedReasons[strings.TrimSpace(targetName)]
