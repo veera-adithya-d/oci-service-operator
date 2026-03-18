@@ -57,6 +57,13 @@ spec:
             description: StandardTagNamespaceStatus defines the observed state of
               StandardTagNamespace.
             properties:
+              description:
+                description: The default description of the tag namespace that users
+                  can use to create the tag namespace
+                type: string
+              standardTagNamespaceName:
+                description: The reserved name of this standard tag namespace
+                type: string
               status:
                 properties:
                   conditions:

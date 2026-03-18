@@ -36,6 +36,18 @@ type TopicSpec struct {
 // TopicStatus defines the observed state of Topic.
 type TopicStatus struct {
 	OsokStatus shared.OSOKStatus `json:"status"`
+	// The OCID (https://docs.cloud.oracle.com/iaas/Content/General/Concepts/identifiers.htm) of the topic.
+	TopicId string `json:"topicId,omitempty"`
+	// The lifecycle state of the topic.
+	LifecycleState string `json:"lifecycleState,omitempty"`
+	// The time the topic was created.
+	TimeCreated string `json:"timeCreated,omitempty"`
+	// The endpoint for managing subscriptions or publishing messages to the topic.
+	ApiEndpoint string `json:"apiEndpoint,omitempty"`
+	// A unique short topic Id. This is used only for SMS subscriptions.
+	ShortTopicId string `json:"shortTopicId,omitempty"`
+	// For optimistic concurrency control. See `if-match`.
+	Etag string `json:"etag,omitempty"`
 }
 
 // +kubebuilder:object:root=true

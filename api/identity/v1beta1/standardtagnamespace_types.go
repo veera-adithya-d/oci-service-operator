@@ -19,6 +19,10 @@ type StandardTagNamespaceSpec struct {
 // StandardTagNamespaceStatus defines the observed state of StandardTagNamespace.
 type StandardTagNamespaceStatus struct {
 	OsokStatus shared.OSOKStatus `json:"status"`
+	// The default description of the tag namespace that users can use to create the tag namespace
+	Description string `json:"description,omitempty"`
+	// The reserved name of this standard tag namespace
+	StandardTagNamespaceName string `json:"standardTagNamespaceName,omitempty"`
 }
 
 // +kubebuilder:object:root=true

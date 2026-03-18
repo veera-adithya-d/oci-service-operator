@@ -34,7 +34,12 @@ type StreamSpec struct {
 type StreamStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	OsokStatus shared.OSOKStatus `json:"status"`
+	OsokStatus            shared.OSOKStatus `json:"status"`
+	Id                    string            `json:"id,omitempty"`
+	LifecycleState        string            `json:"lifecycleState,omitempty"`
+	TimeCreated           string            `json:"timeCreated,omitempty"`
+	MessagesEndpoint      string            `json:"messagesEndpoint,omitempty"`
+	LifecycleStateDetails string            `json:"lifecycleStateDetails,omitempty"`
 }
 
 // +kubebuilder:object:root=true
