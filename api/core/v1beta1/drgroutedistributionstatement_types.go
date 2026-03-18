@@ -31,6 +31,8 @@ type DrgRouteDistributionStatementSpec struct {
 // DrgRouteDistributionStatementMatchCriteria defines nested fields for DrgRouteDistributionStatement.MatchCriteria.
 type DrgRouteDistributionStatementMatchCriteria struct {
 	// +kubebuilder:validation:Optional
+	JsonData string `json:"jsonData,omitempty"`
+	// +kubebuilder:validation:Optional
 	MatchType string `json:"matchType,omitempty"`
 	// The OCID (https://docs.cloud.oracle.com/iaas/Content/General/Concepts/identifiers.htm) of the DRG attachment.
 	// +kubebuilder:validation:Required
@@ -43,6 +45,8 @@ type DrgRouteDistributionStatementMatchCriteria struct {
 
 // DrgRouteDistributionStatementStatementMatchCriteria defines nested fields for DrgRouteDistributionStatement.Statement.MatchCriteria.
 type DrgRouteDistributionStatementStatementMatchCriteria struct {
+	// +kubebuilder:validation:Optional
+	JsonData string `json:"jsonData,omitempty"`
 	// +kubebuilder:validation:Optional
 	MatchType string `json:"matchType,omitempty"`
 	// The OCID (https://docs.cloud.oracle.com/iaas/Content/General/Concepts/identifiers.htm) of the DRG attachment.
@@ -70,8 +74,20 @@ type DrgRouteDistributionStatementStatement struct {
 // DrgRouteDistributionStatementStatus defines the observed state of DrgRouteDistributionStatement.
 type DrgRouteDistributionStatementStatus struct {
 	OsokStatus shared.OSOKStatus `json:"status"`
+	// The action is applied only if all of the match criteria is met.
+	// If there are no match criteria in a statement, any input is considered a match and the action is applied.
+	MatchCriteria []DrgRouteDistributionStatementMatchCriteria `json:"matchCriteria,omitempty"`
 	// `ACCEPT` indicates the route should be imported or exported as-is.
 	Action string `json:"action,omitempty"`
+	// This field specifies the priority of each statement in a route distribution.
+	// Priorities must be unique within a particular route distribution.
+	// The priority will be represented as a number between 0 and 65535 where a lower number
+	// indicates a higher priority. When a route is processed, statements are applied in the order
+	// defined by their priority. The first matching rule dictates the action that will be taken
+	// on the route.
+	Priority int `json:"priority,omitempty"`
+	// The Oracle-assigned ID of the route distribution statement.
+	Id string `json:"id,omitempty"`
 }
 
 // +kubebuilder:object:root=true

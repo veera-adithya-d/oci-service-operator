@@ -74,6 +74,8 @@ spec:
                       description: The OCID (https://docs.cloud.oracle.com/iaas/Content/General/Concepts/identifiers.htm)
                         of the DRG attachment.
                       type: string
+                    jsonData:
+                      type: string
                     matchType:
                       type: string
                   required:
@@ -111,6 +113,8 @@ spec:
                             description: The OCID (https://docs.cloud.oracle.com/iaas/Content/General/Concepts/identifiers.htm)
                               of the DRG attachment.
                             type: string
+                          jsonData:
+                            type: string
                           matchType:
                             type: string
                         required:
@@ -137,6 +141,44 @@ spec:
                 description: '`ACCEPT` indicates the route should be imported or exported
                   as-is.'
                 type: string
+              id:
+                description: The Oracle-assigned ID of the route distribution statement.
+                type: string
+              matchCriteria:
+                description: |-
+                  The action is applied only if all of the match criteria is met.
+                  If there are no match criteria in a statement, any input is considered a match and the action is applied.
+                items:
+                  description: DrgRouteDistributionStatementMatchCriteria defines
+                    nested fields for DrgRouteDistributionStatement.MatchCriteria.
+                  properties:
+                    attachmentType:
+                      description: |-
+                        The type of the network resource to be included in this match. A match for a network type implies that all
+                        DRG attachments of that type insert routes into the table.
+                      type: string
+                    drgAttachmentId:
+                      description: The OCID (https://docs.cloud.oracle.com/iaas/Content/General/Concepts/identifiers.htm)
+                        of the DRG attachment.
+                      type: string
+                    jsonData:
+                      type: string
+                    matchType:
+                      type: string
+                  required:
+                  - attachmentType
+                  - drgAttachmentId
+                  type: object
+                type: array
+              priority:
+                description: |-
+                  This field specifies the priority of each statement in a route distribution.
+                  Priorities must be unique within a particular route distribution.
+                  The priority will be represented as a number between 0 and 65535 where a lower number
+                  indicates a higher priority. When a route is processed, statements are applied in the order
+                  defined by their priority. The first matching rule dictates the action that will be taken
+                  on the route.
+                type: integer
               status:
                 properties:
                   conditions:

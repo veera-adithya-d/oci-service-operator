@@ -18,6 +18,7 @@ type CostTrackingTagSpec struct {
 
 // CostTrackingTagValidator defines nested fields for CostTrackingTag.Validator.
 type CostTrackingTagValidator struct {
+	JsonData      string `json:"jsonData,omitempty"`
 	ValidatorType string `json:"validatorType,omitempty"`
 	// The list of allowed values for a definedTag value.
 	Values []string `json:"values,omitempty"`

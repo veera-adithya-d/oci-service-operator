@@ -41,24 +41,6 @@ type OAuthClientCredentialScope struct {
 // OAuthClientCredentialStatus defines the observed state of OAuthClientCredential.
 type OAuthClientCredentialStatus struct {
 	OsokStatus shared.OSOKStatus `json:"status"`
-	// Returned during create and update with password reset requests.
-	Password string `json:"password,omitempty"`
-	// The OCID of the user the Oauth credential belongs to.
-	UserId string `json:"userId,omitempty"`
-	// Date and time when this credential will expire, in the format defined by RFC3339.
-	// Null if it never expires.
-	// Example: `2016-08-25T21:10:29.600Z`
-	ExpiresOn string `json:"expiresOn,omitempty"`
-	// The OCID of the Oauth credential.
-	Id string `json:"id,omitempty"`
-	// The OCID of the compartment containing the Oauth credential.
-	CompartmentId string `json:"compartmentId,omitempty"`
-	// The credential's current state. After creating a Oauth credential, make sure its `lifecycleState` changes from
-	// CREATING to ACTIVE before using it.
-	LifecycleState string `json:"lifecycleState,omitempty"`
-	// Date and time the `OAuth2ClientCredential` object was created, in the format defined by RFC3339.
-	// Example: `2016-08-25T21:10:29.600Z`
-	TimeCreated string `json:"timeCreated,omitempty"`
 }
 
 // +kubebuilder:object:root=true

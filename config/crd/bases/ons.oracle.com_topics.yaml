@@ -91,19 +91,6 @@ spec:
           status:
             description: TopicStatus defines the observed state of Topic.
             properties:
-              apiEndpoint:
-                description: The endpoint for managing subscriptions or publishing
-                  messages to the topic.
-                type: string
-              etag:
-                description: For optimistic concurrency control. See `if-match`.
-                type: string
-              lifecycleState:
-                description: The lifecycle state of the topic.
-                type: string
-              shortTopicId:
-                description: A unique short topic Id. This is used only for SMS subscriptions.
-                type: string
               status:
                 properties:
                   conditions:
@@ -146,13 +133,6 @@ spec:
                     format: date-time
                     type: string
                 type: object
-              timeCreated:
-                description: The time the topic was created.
-                type: string
-              topicId:
-                description: The OCID (https://docs.cloud.oracle.com/iaas/Content/General/Concepts/identifiers.htm)
-                  of the topic.
-                type: string
             required:
             - status
             type: object

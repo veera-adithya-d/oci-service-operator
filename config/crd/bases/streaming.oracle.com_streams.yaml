@@ -94,14 +94,6 @@ spec:
           status:
             description: StreamStatus defines the observed state of Stream
             properties:
-              id:
-                type: string
-              lifecycleState:
-                type: string
-              lifecycleStateDetails:
-                type: string
-              messagesEndpoint:
-                type: string
               status:
                 description: |-
                   INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
@@ -147,8 +139,6 @@ spec:
                     format: date-time
                     type: string
                 type: object
-              timeCreated:
-                type: string
             required:
             - status
             type: object

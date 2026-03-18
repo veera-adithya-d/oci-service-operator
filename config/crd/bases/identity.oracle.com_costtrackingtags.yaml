@@ -158,6 +158,8 @@ spec:
               validator:
                 description: CostTrackingTagValidator defines nested fields for CostTrackingTag.Validator.
                 properties:
+                  jsonData:
+                    type: string
                   validatorType:
                     type: string
                   values:
