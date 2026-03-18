@@ -113,8 +113,9 @@ func findModuleRoot() (string, error) {
 
 func resourceModels(index *ocisdk.Package, service ServiceConfig) ([]ResourceModel, error) {
 	type candidate struct {
-		rawName    string
-		operations map[string]struct{}
+		rawName             string
+		operations          map[string]struct{}
+		requestBodyPayloads []string
 	}
 
 	candidates := make(map[string]*candidate)
@@ -137,6 +138,9 @@ func resourceModels(index *ocisdk.Package, service ServiceConfig) ([]ResourceMod
 			candidates[rawName] = entry
 		}
 		entry.operations[matches[1]] = struct{}{}
+		if matches[3] == "Request" {
+			entry.requestBodyPayloads = appendUniqueStrings(entry.requestBodyPayloads, index.RequestBodyPayloads(typeName)...)
+		}
 	}
 
 	if len(candidates) == 0 {
@@ -158,7 +162,7 @@ func resourceModels(index *ocisdk.Package, service ServiceConfig) ([]ResourceMod
 			compatibilityLocked = true
 		}
 
-		fieldSet := synthesizeResourceFieldSet(index, kind, entry.rawName)
+		fieldSet := synthesizeResourceFieldSet(index, kind, entry.rawName, desiredStateStructCandidates(entry.rawName, entry.requestBodyPayloads))
 		displayField := ""
 		switch {
 		case hasField(fieldSet.SpecFields, "DisplayName"):

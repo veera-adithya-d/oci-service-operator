@@ -14,6 +14,9 @@ import (
 
 // UserStateSpec defines the desired state of UserState.
 type UserStateSpec struct {
+	// Update state to blocked or unblocked. Only "false" is supported (for changing the state to unblocked).
+	// +kubebuilder:validation:Optional
+	Blocked bool `json:"blocked,omitempty"`
 }
 
 // UserStateStatus defines the observed state of UserState.

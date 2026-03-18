@@ -1823,9 +1823,17 @@ spec:
                       type: object
                     type: array
                 type: object
+              instanceId:
+                description: |-
+                  The OCID (https://docs.cloud.oracle.com/iaas/Content/General/Concepts/identifiers.htm) of the instance to use to create the
+                  instance configuration.
+                type: string
+              source:
+                type: string
             required:
             - compartmentId
             - instanceDetails
+            - instanceId
             type: object
           status:
             description: InstanceConfigurationStatus defines the observed state of

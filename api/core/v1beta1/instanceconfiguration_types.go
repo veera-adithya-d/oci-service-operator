@@ -34,6 +34,12 @@ type InstanceConfigurationSpec struct {
 	// Example: `{"Department": "Finance"}`
 	// +kubebuilder:validation:Optional
 	FreeformTags map[string]string `json:"freeformTags,omitempty"`
+	// +kubebuilder:validation:Optional
+	Source string `json:"source,omitempty"`
+	// The OCID (https://docs.cloud.oracle.com/iaas/Content/General/Concepts/identifiers.htm) of the instance to use to create the
+	// instance configuration.
+	// +kubebuilder:validation:Required
+	InstanceId string `json:"instanceId"`
 }
 
 // InstanceConfigurationInstanceDetailsOptionBlockVolumeAttachDetails defines nested fields for InstanceConfiguration.InstanceDetails.Option.BlockVolume.AttachDetails.

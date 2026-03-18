@@ -18,13 +18,10 @@ type resourceFieldSet struct {
 	HelperTypes  []TypeModel
 }
 
-func synthesizeResourceFieldSet(index *ocisdk.Package, resourceKind string, rawName string) resourceFieldSet {
+func synthesizeResourceFieldSet(index *ocisdk.Package, resourceKind string, rawName string, specCandidates []string) resourceFieldSet {
 	synthesizer := newFieldSynthesizer(index, resourceKind)
 
-	specFields, desiredJSONNames := synthesizer.mergeStructFields([]string{
-		"Create" + rawName + "Details",
-		"Update" + rawName + "Details",
-	}, nil, fieldRenderingOptions{scope: fieldScopeSpec})
+	specFields, desiredJSONNames := synthesizer.mergeStructFields(specCandidates, nil, fieldRenderingOptions{scope: fieldScopeSpec})
 
 	statusFields := defaultStatusFields()
 	statusJSONNames := fieldJSONNames(statusFields)
@@ -49,6 +46,13 @@ func synthesizeResourceFieldSet(index *ocisdk.Package, resourceKind string, rawN
 		StatusFields: statusFields,
 		HelperTypes:  append([]TypeModel(nil), synthesizer.helperTypes...),
 	}
+}
+
+func desiredStateStructCandidates(rawName string, requestBodyPayloads []string) []string {
+	return appendUniqueStrings([]string{
+		"Create" + rawName + "Details",
+		"Update" + rawName + "Details",
+	}, requestBodyPayloads...)
 }
 
 type fieldSynthesizer struct {

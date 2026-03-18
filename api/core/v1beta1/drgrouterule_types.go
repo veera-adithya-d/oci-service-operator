@@ -32,6 +32,31 @@ type DrgRouteRuleSpec struct {
 	// for reaching the network destination.
 	// +kubebuilder:validation:Optional
 	NextHopDrgAttachmentId string `json:"nextHopDrgAttachmentId,omitempty"`
+	// The DRG rute rules to update.
+	// +kubebuilder:validation:Optional
+	RouteRules []DrgRouteRuleRouteRule `json:"routeRules,omitempty"`
+}
+
+// DrgRouteRuleRouteRule defines nested fields for DrgRouteRule.RouteRule.
+type DrgRouteRuleRouteRule struct {
+	// The Oracle-assigned ID of each DRG route rule to update.
+	// +kubebuilder:validation:Required
+	Id string `json:"id"`
+	// The range of IP addresses used for matching when routing traffic.
+	// Potential values:
+	//   * IP address range in CIDR notation. Can be an IPv4 CIDR block or IPv6 prefix. For example: `192.168.1.0/24`
+	//   or `2001:0db8:0123:45::/56`.
+	// +kubebuilder:validation:Optional
+	Destination string `json:"destination,omitempty"`
+	// Type of destination for the rule.
+	// Allowed values:
+	//   * `CIDR_BLOCK`: If the rule's `destination` is an IP address range in CIDR notation.
+	// +kubebuilder:validation:Optional
+	DestinationType string `json:"destinationType,omitempty"`
+	// The OCID (https://docs.cloud.oracle.com/iaas/Content/General/Concepts/identifiers.htm) of the next hop DRG attachment. The next hop DRG attachment is responsible
+	// for reaching the network destination.
+	// +kubebuilder:validation:Optional
+	NextHopDrgAttachmentId string `json:"nextHopDrgAttachmentId,omitempty"`
 }
 
 // DrgRouteRuleStatus defines the observed state of DrgRouteRule.

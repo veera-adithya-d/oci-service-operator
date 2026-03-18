@@ -51,6 +51,11 @@ spec:
             type: object
           spec:
             description: UserStateSpec defines the desired state of UserState.
+            properties:
+              blocked:
+                description: Update state to blocked or unblocked. Only "false" is
+                  supported (for changing the state to unblocked).
+                type: boolean
             type: object
           status:
             description: UserStateStatus defines the observed state of UserState.

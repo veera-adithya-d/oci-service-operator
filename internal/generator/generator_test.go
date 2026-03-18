@@ -142,6 +142,22 @@ func TestBuildPackageModelDiscoversResources(t *testing.T) {
 	if !hasField(report.StatusFields, "DisplayName") {
 		t.Fatalf("Report status fields = %#v, want DisplayName from the summary model", report.StatusFields)
 	}
+
+	reportByName := findResource(t, pkg.Resources, "ReportByName")
+	if !hasField(reportByName.SpecFields, "DisplayName") {
+		t.Fatalf("ReportByName spec fields = %#v, want DisplayName from the non-CRUD request payload", reportByName.SpecFields)
+	}
+
+	oauthClientCredential := findResource(t, pkg.Resources, "OAuthClientCredential")
+	if !hasField(oauthClientCredential.SpecFields, "Name") {
+		t.Fatalf("OAuthClientCredential spec fields = %#v, want Name from the aliased create payload", oauthClientCredential.SpecFields)
+	}
+	if !hasField(oauthClientCredential.SpecFields, "Description") {
+		t.Fatalf("OAuthClientCredential spec fields = %#v, want Description from the aliased create/update payloads", oauthClientCredential.SpecFields)
+	}
+	if !hasField(oauthClientCredential.SpecFields, "Scopes") {
+		t.Fatalf("OAuthClientCredential spec fields = %#v, want Scopes from the aliased create/update payloads", oauthClientCredential.SpecFields)
+	}
 }
 
 func TestBuildPackageModelSynthesizesComplexSDKFields(t *testing.T) {
