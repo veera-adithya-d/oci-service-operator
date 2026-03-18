@@ -52,6 +52,14 @@ func TestSummarizeAPI(t *testing.T) {
 				TrackingStatus: apispec.TrackingStatusUntracked,
 				TrackingReason: "Generated API spec has no mapped SDK payloads in the validator target registry.",
 			},
+			{
+				Service:        "loadbalancer",
+				Spec:           "LoadBalancerShape",
+				APISurface:     "excluded",
+				SDKStruct:      "loadbalancer.UpdateLoadBalancerShapeDetails",
+				TrackingStatus: apispec.TrackingStatusUntracked,
+				TrackingReason: "Intentionally untracked: duplicate desired-state payload is already tracked on LoadBalancerLoadBalancerShape.",
+			},
 		},
 	}
 

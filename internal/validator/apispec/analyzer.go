@@ -15,8 +15,9 @@ const (
 	TrackingStatusTracked   = "tracked"
 	TrackingStatusUntracked = "untracked"
 
-	apiSurfaceSpec   = "spec"
-	apiSurfaceStatus = "status"
+	apiSurfaceSpec     = "spec"
+	apiSurfaceStatus   = "status"
+	apiSurfaceExcluded = "excluded"
 )
 
 type Report struct {
@@ -116,7 +117,7 @@ func BuildReport(sdkStructs []sdk.SDKStruct, allow allowlist.Allowlist) (Report,
 			statusFields = collectAPIFields(target.StatusType, apiSurfaceStatus)
 		}
 
-		if len(target.SDKStructs) == 0 {
+		if len(target.SDKMappings) == 0 {
 			if coverage, ok := responseBodyCoverageForTarget(target.Name); ok {
 				report.Structs = append(report.Structs, newResponseBodyStructReport(serviceName, target.Name, coverage))
 				continue
@@ -129,14 +130,20 @@ func BuildReport(sdkStructs []sdk.SDKStruct, allow allowlist.Allowlist) (Report,
 			continue
 		}
 
-		for _, sdkName := range target.SDKStructs {
-			sdkStruct, ok := sdkIndex[sdkName]
-			if !ok {
-				report.Structs = append(report.Structs, newUntrackedStructReport(serviceName, target.Name, selectAPISurfaceByName(sdkName, statusFields), sdkName, "API coverage target references an SDK payload that is missing from the SDK seed registry."))
+		for _, mapping := range target.SDKMappings {
+			sdkName := mapping.SDKStruct
+			if mapping.Exclude {
+				report.Structs = append(report.Structs, newUntrackedStructReport(serviceName, target.Name, excludedAPISurface(mapping, statusFields), sdkName, excludedMappingReason(mapping)))
 				continue
 			}
 
-			apiFields, apiSurface := selectAPIFieldsForSDKStruct(sdkStruct, specFields, statusFields)
+			sdkStruct, ok := sdkIndex[sdkName]
+			if !ok {
+				report.Structs = append(report.Structs, newUntrackedStructReport(serviceName, target.Name, selectAPISurfaceForMapping(mapping, statusFields), sdkName, "API coverage target references an SDK payload that is missing from the SDK seed registry."))
+				continue
+			}
+
+			apiFields, apiSurface := selectAPIFieldsForSDKStruct(mapping, sdkStruct, specFields, statusFields)
 			missing := make([]FieldReport, 0)
 			present := make([]FieldReport, 0)
 			extra := make([]FieldReport, 0)
@@ -232,8 +239,8 @@ func newUntrackedStructReport(service, spec, apiSurface, sdkStruct, reason strin
 }
 
 func targetService(target Target) string {
-	if len(target.SDKStructs) > 0 {
-		parts := strings.SplitN(target.SDKStructs[0], ".", 2)
+	if len(target.SDKMappings) > 0 {
+		parts := strings.SplitN(target.SDKMappings[0].SDKStruct, ".", 2)
 		if len(parts) == 2 {
 			return parts[0]
 		}
@@ -248,6 +255,13 @@ func defaultAPISurface(specFields *specFieldSet, statusFields *specFieldSet) str
 	return apiSurfaceSpec
 }
 
+func selectAPISurfaceForMapping(mapping SDKMapping, statusFields *specFieldSet) string {
+	if explicit := normalizeAPISurface(mapping.APISurface); explicit != "" {
+		return explicit
+	}
+	return selectAPISurfaceByName(mapping.SDKStruct, statusFields)
+}
+
 func selectAPISurfaceByName(sdkName string, statusFields *specFieldSet) string {
 	if statusFields == nil {
 		return apiSurfaceSpec
@@ -258,7 +272,17 @@ func selectAPISurfaceByName(sdkName string, statusFields *specFieldSet) string {
 	return apiSurfaceStatus
 }
 
-func selectAPIFieldsForSDKStruct(sdkStruct sdk.SDKStruct, specFields *specFieldSet, statusFields *specFieldSet) (*specFieldSet, string) {
+func selectAPIFieldsForSDKStruct(mapping SDKMapping, sdkStruct sdk.SDKStruct, specFields *specFieldSet, statusFields *specFieldSet) (*specFieldSet, string) {
+	switch normalizeAPISurface(mapping.APISurface) {
+	case apiSurfaceSpec:
+		return specFields, apiSurfaceSpec
+	case apiSurfaceStatus:
+		if statusFields == nil {
+			return specFields, apiSurfaceSpec
+		}
+		return statusFields, apiSurfaceStatus
+	}
+
 	if statusFields == nil {
 		return specFields, apiSurfaceSpec
 	}
@@ -275,6 +299,27 @@ func selectAPIFieldsForSDKStruct(sdkStruct sdk.SDKStruct, specFields *specFieldS
 	default:
 		return statusFields, apiSurfaceStatus
 	}
+}
+
+func normalizeAPISurface(apiSurface string) string {
+	switch strings.ToLower(strings.TrimSpace(apiSurface)) {
+	case apiSurfaceSpec:
+		return apiSurfaceSpec
+	case apiSurfaceStatus:
+		return apiSurfaceStatus
+	default:
+		return ""
+	}
+}
+
+func excludedAPISurface(mapping SDKMapping, statusFields *specFieldSet) string {
+	if normalizeAPISurface(mapping.APISurface) != "" {
+		return apiSurfaceExcluded
+	}
+	if statusFields == nil {
+		return apiSurfaceExcluded
+	}
+	return apiSurfaceExcluded
 }
 
 func countMatchingFields(set *specFieldSet, fields []sdk.SDKField) int {

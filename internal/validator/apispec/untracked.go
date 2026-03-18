@@ -22,6 +22,16 @@ func responseBodyReason(sdkType string) string {
 	return intentionalUntrackedPrefix + "spec is empty and the SDK only returns " + sdkType + " in the response body, not as a desired-state payload."
 }
 
+func excludedMappingReason(mapping SDKMapping) string {
+	if strings.HasPrefix(strings.TrimSpace(mapping.Reason), intentionalUntrackedPrefix) {
+		return strings.TrimSpace(mapping.Reason)
+	}
+	if strings.TrimSpace(mapping.Reason) != "" {
+		return intentionalUntrackedPrefix + strings.TrimSpace(mapping.Reason)
+	}
+	return intentionalUntrackedPrefix + "mapping is intentionally excluded from desired-state coverage by validator registry metadata."
+}
+
 func scalarContentReason(description string) string {
 	return intentionalUntrackedPrefix + "spec is empty and " + description + ", not a reusable SDK struct for desired-state validation."
 }

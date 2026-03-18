@@ -14,18 +14,26 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/oracle/oci-service-operator/internal/generator"
 )
 
 type specTarget struct {
-	Service  string
-	Group    string
-	Spec     string
-	Status   string
-	Name     string
-	SDKTypes []string
+	Service     string
+	Group       string
+	Spec        string
+	Status      string
+	Name        string
+	SDKMappings []sdkMapping
+}
+
+type sdkMapping struct {
+	SDKStruct  string
+	APISurface string
+	Exclude    bool
+	Reason     string
 }
 
 type apiTypeInfo struct {
@@ -47,9 +55,7 @@ type configuredService struct {
 var (
 	reSDKStruct = regexp.MustCompile(`(?m)^type\s+([A-Za-z0-9]+)\s+struct\b`)
 
-	reAPITargetBlock = regexp.MustCompile(`(?s)\{\s*Name:\s*"([^"]+)",\s*SpecType:\s*reflect\.TypeOf\(([a-z0-9]+)v1beta1\.([A-Za-z0-9]+)Spec\{\}\),\s*(?:StatusType:\s*reflect\.TypeOf\([a-z0-9]+v1beta1\.([A-Za-z0-9]+)\{\}\),\s*)?SDKStructs:\s*\[]string\{\s*(.*?)\s*\},\s*\},`)
-	reSDKRef         = regexp.MustCompile(`"([a-z0-9]+\.[A-Za-z0-9]+)"`)
-	reSDKTarget      = regexp.MustCompile(`newTarget\("([a-z0-9]+)",\s*"([A-Za-z0-9]+)"`)
+	reSDKTarget = regexp.MustCompile(`newTarget\("([a-z0-9]+)",\s*"([A-Za-z0-9]+)"`)
 )
 
 func main() {
@@ -156,24 +162,217 @@ func rel(root, p string) string {
 }
 
 func parseExistingAPITargets(path string) (map[string]specTarget, error) {
-	data, err := os.ReadFile(path)
+	fileSet := token.NewFileSet()
+	parsed, err := parser.ParseFile(fileSet, path, nil, parser.SkipObjectResolution)
 	if err != nil {
 		return nil, err
 	}
+
 	m := make(map[string]specTarget)
-	for _, block := range reAPITargetBlock.FindAllSubmatch(data, -1) {
-		name := string(block[1])
-		group := string(block[2])
-		spec := string(block[3])
-		sdkRefsRaw := block[5]
-		refs := make([]string, 0)
-		for _, ref := range reSDKRef.FindAllSubmatch(sdkRefsRaw, -1) {
-			refs = append(refs, string(ref[1]))
+	for _, declaration := range parsed.Decls {
+		genDecl, ok := declaration.(*ast.GenDecl)
+		if !ok || genDecl.Tok != token.VAR {
+			continue
 		}
-		key := group + "." + spec
-		m[key] = specTarget{Group: group, Spec: spec, Status: string(block[4]), Name: name, SDKTypes: refs}
+
+		for _, spec := range genDecl.Specs {
+			valueSpec, ok := spec.(*ast.ValueSpec)
+			if !ok || len(valueSpec.Names) != 1 || valueSpec.Names[0].Name != "targets" || len(valueSpec.Values) != 1 {
+				continue
+			}
+
+			composite, ok := valueSpec.Values[0].(*ast.CompositeLit)
+			if !ok {
+				continue
+			}
+
+			for _, element := range composite.Elts {
+				targetLit, ok := element.(*ast.CompositeLit)
+				if !ok {
+					continue
+				}
+
+				target, err := parseExistingAPITarget(targetLit)
+				if err != nil {
+					return nil, err
+				}
+				key := target.Group + "." + target.Spec
+				m[key] = target
+			}
+		}
 	}
 	return m, nil
+}
+
+func parseExistingAPITarget(targetLit *ast.CompositeLit) (specTarget, error) {
+	target := specTarget{}
+	for _, element := range targetLit.Elts {
+		keyValue, ok := element.(*ast.KeyValueExpr)
+		if !ok {
+			continue
+		}
+		key, ok := keyValue.Key.(*ast.Ident)
+		if !ok {
+			continue
+		}
+
+		switch key.Name {
+		case "Name":
+			value, err := stringLiteralValue(keyValue.Value)
+			if err != nil {
+				return specTarget{}, err
+			}
+			target.Name = value
+		case "SpecType":
+			group, typeName, err := parseReflectTypeSelector(keyValue.Value)
+			if err != nil {
+				return specTarget{}, err
+			}
+			target.Group = group
+			target.Spec = strings.TrimSuffix(typeName, "Spec")
+		case "StatusType":
+			_, typeName, err := parseReflectTypeSelector(keyValue.Value)
+			if err != nil {
+				return specTarget{}, err
+			}
+			target.Status = typeName
+		case "SDKStructs":
+			mappings, err := parseLegacySDKStructs(keyValue.Value)
+			if err != nil {
+				return specTarget{}, err
+			}
+			target.SDKMappings = mappings
+		case "SDKMappings":
+			mappings, err := parseSDKMappings(keyValue.Value)
+			if err != nil {
+				return specTarget{}, err
+			}
+			target.SDKMappings = mappings
+		}
+	}
+
+	return target, nil
+}
+
+func parseReflectTypeSelector(expr ast.Expr) (string, string, error) {
+	callExpr, ok := expr.(*ast.CallExpr)
+	if !ok || len(callExpr.Args) != 1 {
+		return "", "", fmt.Errorf("unexpected reflect.TypeOf expression %T", expr)
+	}
+
+	composite, ok := callExpr.Args[0].(*ast.CompositeLit)
+	if !ok {
+		return "", "", fmt.Errorf("unexpected reflect.TypeOf argument %T", callExpr.Args[0])
+	}
+
+	selector, ok := composite.Type.(*ast.SelectorExpr)
+	if !ok {
+		return "", "", fmt.Errorf("unexpected reflect.TypeOf selector %T", composite.Type)
+	}
+
+	groupIdent, ok := selector.X.(*ast.Ident)
+	if !ok {
+		return "", "", fmt.Errorf("unexpected reflect.TypeOf package selector %T", selector.X)
+	}
+
+	group := strings.TrimSuffix(groupIdent.Name, "v1beta1")
+	return group, selector.Sel.Name, nil
+}
+
+func parseLegacySDKStructs(expr ast.Expr) ([]sdkMapping, error) {
+	composite, ok := expr.(*ast.CompositeLit)
+	if !ok {
+		return nil, fmt.Errorf("unexpected SDKStructs expression %T", expr)
+	}
+
+	mappings := make([]sdkMapping, 0, len(composite.Elts))
+	for _, element := range composite.Elts {
+		sdkStruct, err := stringLiteralValue(element)
+		if err != nil {
+			return nil, err
+		}
+		mappings = append(mappings, sdkMapping{SDKStruct: sdkStruct})
+	}
+	return mappings, nil
+}
+
+func parseSDKMappings(expr ast.Expr) ([]sdkMapping, error) {
+	composite, ok := expr.(*ast.CompositeLit)
+	if !ok {
+		return nil, fmt.Errorf("unexpected SDKMappings expression %T", expr)
+	}
+
+	mappings := make([]sdkMapping, 0, len(composite.Elts))
+	for _, element := range composite.Elts {
+		mappingLit, ok := element.(*ast.CompositeLit)
+		if !ok {
+			return nil, fmt.Errorf("unexpected SDKMapping element %T", element)
+		}
+
+		mapping := sdkMapping{}
+		for _, field := range mappingLit.Elts {
+			keyValue, ok := field.(*ast.KeyValueExpr)
+			if !ok {
+				continue
+			}
+			key, ok := keyValue.Key.(*ast.Ident)
+			if !ok {
+				continue
+			}
+
+			switch key.Name {
+			case "SDKStruct":
+				value, err := stringLiteralValue(keyValue.Value)
+				if err != nil {
+					return nil, err
+				}
+				mapping.SDKStruct = value
+			case "APISurface":
+				value, err := stringLiteralValue(keyValue.Value)
+				if err != nil {
+					return nil, err
+				}
+				mapping.APISurface = value
+			case "Exclude":
+				value, err := boolLiteralValue(keyValue.Value)
+				if err != nil {
+					return nil, err
+				}
+				mapping.Exclude = value
+			case "Reason":
+				value, err := stringLiteralValue(keyValue.Value)
+				if err != nil {
+					return nil, err
+				}
+				mapping.Reason = value
+			}
+		}
+		mappings = append(mappings, mapping)
+	}
+	return mappings, nil
+}
+
+func stringLiteralValue(expr ast.Expr) (string, error) {
+	basicLit, ok := expr.(*ast.BasicLit)
+	if !ok || basicLit.Kind != token.STRING {
+		return "", fmt.Errorf("unexpected string literal expression %T", expr)
+	}
+	return strconv.Unquote(basicLit.Value)
+}
+
+func boolLiteralValue(expr ast.Expr) (bool, error) {
+	ident, ok := expr.(*ast.Ident)
+	if !ok {
+		return false, fmt.Errorf("unexpected bool literal expression %T", expr)
+	}
+	switch ident.Name {
+	case "true":
+		return true, nil
+	case "false":
+		return false, nil
+	default:
+		return false, fmt.Errorf("unexpected bool literal %q", ident.Name)
+	}
 }
 
 func parseExistingSDKTargets(path string) ([]sdkTarget, error) {
@@ -351,8 +550,8 @@ func buildTargets(root string, services []configuredService, apiSpecs map[string
 			targetName := makeTargetName(service.Group, specInfo.Spec)
 			candidates := deriveSDKTypes(service.Service, specInfo.Spec, targetName, sdkStructs)
 			if hasExisting {
-				for _, ref := range existingTarget.SDKTypes {
-					parts := strings.Split(ref, ".")
+				for _, mapping := range existingTarget.SDKMappings {
+					parts := strings.Split(mapping.SDKStruct, ".")
 					if len(parts) == 2 && parts[0] == service.Service {
 						candidates = append(candidates, parts[1])
 					}
@@ -372,18 +571,14 @@ func buildTargets(root string, services []configuredService, apiSpecs map[string
 				name = existingTarget.Name
 			}
 			statusType := resolveStatusType(specInfo, hasExisting, existingTarget)
-
-			sdkRefs := make([]string, 0, len(candidates))
-			for _, c := range candidates {
-				sdkRefs = append(sdkRefs, service.Service+"."+c)
-			}
+			mappings := buildSDKMappings(service.Service, specInfo.Spec, candidates, hasExisting, existingTarget)
 			out = append(out, specTarget{
-				Service:  service.Service,
-				Group:    service.Group,
-				Spec:     specInfo.Spec,
-				Status:   statusType,
-				Name:     name,
-				SDKTypes: sdkRefs,
+				Service:     service.Service,
+				Group:       service.Group,
+				Spec:        specInfo.Spec,
+				Status:      statusType,
+				Name:        name,
+				SDKMappings: mappings,
 			})
 		}
 	}
@@ -409,12 +604,12 @@ func buildSDKTargets(targets []specTarget, existing []sdkTarget, services []conf
 		allowedServices[service.Service] = struct{}{}
 	}
 	for _, t := range targets {
-		for _, ref := range t.SDKTypes {
-			parts := strings.Split(ref, ".")
+		for _, mapping := range t.SDKMappings {
+			parts := strings.Split(mapping.SDKStruct, ".")
 			if len(parts) != 2 {
 				continue
 			}
-			k := ref
+			k := mapping.SDKStruct
 			set[k] = sdkTarget{Group: parts[0], Type: parts[1]}
 		}
 	}
@@ -448,6 +643,79 @@ func buildSDKTargets(targets []specTarget, existing []sdkTarget, services []conf
 	return out
 }
 
+func buildSDKMappings(service, spec string, candidates []string, hasExisting bool, existing specTarget) []sdkMapping {
+	override := explicitAPITargetOverrides[service+"."+spec]
+
+	existingByType := make(map[string]sdkMapping, len(existing.SDKMappings))
+	for _, mapping := range existing.SDKMappings {
+		typeName, ok := unqualifiedSDKType(mapping.SDKStruct, service)
+		if !ok {
+			continue
+		}
+		existingByType[typeName] = mapping
+	}
+
+	overrideTypes := make([]string, 0, len(override.MappingOverrides))
+	for typeName := range override.MappingOverrides {
+		overrideTypes = append(overrideTypes, typeName)
+	}
+	sort.Strings(overrideTypes)
+
+	order := make([]string, 0, len(override.SDKTypes)+len(candidates)+len(existingByType)+len(overrideTypes))
+	order = append(order, override.SDKTypes...)
+	order = append(order, overrideTypes...)
+	order = append(order, candidates...)
+	if hasExisting {
+		for _, mapping := range existing.SDKMappings {
+			typeName, ok := unqualifiedSDKType(mapping.SDKStruct, service)
+			if !ok {
+				continue
+			}
+			order = append(order, typeName)
+		}
+	}
+	order = uniqueByOrder(order)
+	sort.SliceStable(order, func(i, j int) bool {
+		ai, aj := sdkTypeOrder(order[i]), sdkTypeOrder(order[j])
+		if ai != aj {
+			return ai < aj
+		}
+		return order[i] < order[j]
+	})
+
+	mappings := make([]sdkMapping, 0, len(order))
+	for _, typeName := range order {
+		mapping := sdkMapping{SDKStruct: service + "." + typeName}
+		if existingMapping, ok := existingByType[typeName]; ok {
+			mapping = existingMapping
+		}
+		if override.UseStatus && strings.TrimSpace(mapping.APISurface) == "" {
+			mapping.APISurface = "status"
+		}
+		if overrideMapping, ok := override.MappingOverrides[typeName]; ok {
+			if strings.TrimSpace(overrideMapping.APISurface) != "" {
+				mapping.APISurface = overrideMapping.APISurface
+			}
+			if overrideMapping.Exclude {
+				mapping.Exclude = true
+			}
+			if strings.TrimSpace(overrideMapping.Reason) != "" {
+				mapping.Reason = overrideMapping.Reason
+			}
+		}
+		mappings = append(mappings, mapping)
+	}
+	return mappings
+}
+
+func unqualifiedSDKType(sdkStruct, service string) (string, bool) {
+	parts := strings.Split(strings.TrimSpace(sdkStruct), ".")
+	if len(parts) != 2 || parts[0] != service {
+		return "", false
+	}
+	return parts[1], true
+}
+
 func scanSDKStructNames(dir string) map[string]bool {
 	out := make(map[string]bool)
 	_ = filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
@@ -474,8 +742,15 @@ func scanSDKStructNames(dir string) map[string]bool {
 }
 
 type apiTargetOverride struct {
-	SDKTypes  []string
-	UseStatus bool
+	SDKTypes         []string
+	UseStatus        bool
+	MappingOverrides map[string]mappingOverride
+}
+
+type mappingOverride struct {
+	APISurface string
+	Exclude    bool
+	Reason     string
 }
 
 // Explicit overrides cover specs whose API surface or SDK names do not follow the common generator conventions.
@@ -499,29 +774,43 @@ var explicitAPITargetOverrides = map[string]apiTargetOverride{
 	"core.IPSecConnectionTunnelRoute":                      {SDKTypes: []string{"TunnelRouteSummary"}, UseStatus: true},
 	"core.IPSecConnectionTunnelSecurityAssociation":        {SDKTypes: []string{"TunnelSecurityAssociationSummary"}, UseStatus: true},
 	"core.InstanceDevice":                                  {SDKTypes: []string{"Device"}, UseStatus: true},
-	"core.IpsecCpeDeviceConfigContent":                     {UseStatus: true},
-	"core.NetworkSecurityGroupSecurityRule":                {SDKTypes: []string{"SecurityRule"}},
-	"core.TunnelCpeDeviceConfigContent":                    {UseStatus: true},
-	"core.VolumeBackupPolicyAssetAssignment":               {SDKTypes: []string{"VolumeBackupPolicyAssignment"}},
-	"core.WindowsInstanceInitialCredential":                {SDKTypes: []string{"InstanceCredentials"}, UseStatus: true},
-	"dns.DomainRecord":                                     {SDKTypes: []string{"Record"}},
-	"dns.ResolverEndpoint":                                 {SDKTypes: []string{"ResolverVnicEndpoint", "ResolverVnicEndpointSummary"}},
-	"dns.ZoneContent":                                      {UseStatus: true},
-	"dns.ZoneFromZoneFile":                                 {SDKTypes: []string{"Zone"}, UseStatus: true},
-	"dns.ZoneRecord":                                       {SDKTypes: []string{"Record"}},
-	"identity.CostTrackingTag":                             {SDKTypes: []string{"Tag"}, UseStatus: true},
-	"identity.IdentityProvider":                            {SDKTypes: []string{"Saml2IdentityProvider"}},
-	"identity.OrResetUIPassword":                           {SDKTypes: []string{"UiPassword"}, UseStatus: true},
-	"identity.StandardTagNamespace":                        {SDKTypes: []string{"StandardTagNamespaceTemplate", "StandardTagNamespaceTemplateSummary"}},
-	"identity.StandardTagTemplate":                         {SDKTypes: []string{"StandardTagDefinitionTemplate"}},
-	"identity.UserState":                                   {SDKTypes: []string{"User"}, UseStatus: true},
-	"identity.UserUIPasswordInformation":                   {SDKTypes: []string{"UiPasswordInformation"}},
-	"keymanagement.PreCoUserCredential":                    {SDKTypes: []string{"PreCoUserCredentials"}},
-	"loadbalancer.NetworkSecurityGroup":                    {SDKTypes: []string{"UpdateNetworkSecurityGroupsDetails"}},
-	"networkloadbalancer.NetworkSecurityGroup":             {SDKTypes: []string{"UpdateNetworkSecurityGroupsDetails"}},
-	"objectstorage.Namespace":                              {SDKTypes: []string{"NamespaceMetadata"}},
-	"ons.ConfirmSubscription":                              {SDKTypes: []string{"ConfirmationResult"}, UseStatus: true},
-	"ons.Unsubscription":                                   {UseStatus: true},
+	"core.Instance": {
+		MappingOverrides: map[string]mappingOverride{
+			"Instance":        {APISurface: "status"},
+			"InstanceSummary": {APISurface: "status"},
+		},
+	},
+	"core.IpsecCpeDeviceConfigContent":       {UseStatus: true},
+	"core.NetworkSecurityGroupSecurityRule":  {SDKTypes: []string{"SecurityRule"}},
+	"core.TunnelCpeDeviceConfigContent":      {UseStatus: true},
+	"core.VolumeBackupPolicyAssetAssignment": {SDKTypes: []string{"VolumeBackupPolicyAssignment"}},
+	"core.WindowsInstanceInitialCredential":  {SDKTypes: []string{"InstanceCredentials"}, UseStatus: true},
+	"dns.DomainRecord":                       {SDKTypes: []string{"Record"}},
+	"dns.ResolverEndpoint":                   {SDKTypes: []string{"ResolverVnicEndpoint", "ResolverVnicEndpointSummary"}},
+	"dns.ZoneContent":                        {UseStatus: true},
+	"dns.ZoneFromZoneFile":                   {SDKTypes: []string{"Zone"}, UseStatus: true},
+	"dns.ZoneRecord":                         {SDKTypes: []string{"Record"}},
+	"identity.CostTrackingTag":               {SDKTypes: []string{"Tag"}, UseStatus: true},
+	"identity.IdentityProvider":              {SDKTypes: []string{"Saml2IdentityProvider"}},
+	"identity.OrResetUIPassword":             {SDKTypes: []string{"UiPassword"}, UseStatus: true},
+	"identity.StandardTagNamespace":          {SDKTypes: []string{"StandardTagNamespaceTemplate", "StandardTagNamespaceTemplateSummary"}},
+	"identity.StandardTagTemplate":           {SDKTypes: []string{"StandardTagDefinitionTemplate"}},
+	"identity.UserState":                     {SDKTypes: []string{"User"}, UseStatus: true},
+	"identity.UserUIPasswordInformation":     {SDKTypes: []string{"UiPasswordInformation"}},
+	"keymanagement.PreCoUserCredential":      {SDKTypes: []string{"PreCoUserCredentials"}},
+	"loadbalancer.NetworkSecurityGroup":      {SDKTypes: []string{"UpdateNetworkSecurityGroupsDetails"}},
+	"loadbalancer.Shape": {
+		MappingOverrides: map[string]mappingOverride{
+			"UpdateLoadBalancerShapeDetails": {
+				Exclude: true,
+				Reason:  "Intentionally untracked: duplicate desired-state payload is already tracked on LoadBalancerLoadBalancerShape.",
+			},
+		},
+	},
+	"networkloadbalancer.NetworkSecurityGroup": {SDKTypes: []string{"UpdateNetworkSecurityGroupsDetails"}},
+	"objectstorage.Namespace":                  {SDKTypes: []string{"NamespaceMetadata"}},
+	"ons.ConfirmSubscription":                  {SDKTypes: []string{"ConfirmationResult"}, UseStatus: true},
+	"ons.Unsubscription":                       {UseStatus: true},
 }
 
 func deriveSDKTypes(service, spec, targetName string, structs map[string]bool) []string {
@@ -702,7 +991,8 @@ func renderAPIRegistry(targets []specTarget) ([]byte, error) {
 		fmt.Fprintf(&b, "\t%sv1beta1 \"github.com/oracle/oci-service-operator/api/%s/v1beta1\"\n", g, g)
 	}
 	b.WriteString(")\n\n")
-	b.WriteString("type Target struct {\n\tName       string\n\tSpecType   reflect.Type\n\tStatusType reflect.Type\n\tSDKStructs []string\n}\n\n")
+	b.WriteString("type SDKMapping struct {\n\tSDKStruct  string\n\tAPISurface string\n\tExclude    bool\n\tReason     string\n}\n\n")
+	b.WriteString("type Target struct {\n\tName        string\n\tSpecType    reflect.Type\n\tStatusType  reflect.Type\n\tSDKMappings []SDKMapping\n}\n\n")
 	b.WriteString("var targets = []Target{\n")
 	for _, t := range targets {
 		b.WriteString("\t{\n")
@@ -711,9 +1001,20 @@ func renderAPIRegistry(targets []specTarget) ([]byte, error) {
 		if strings.TrimSpace(t.Status) != "" {
 			fmt.Fprintf(&b, "\t\tStatusType: reflect.TypeOf(%sv1beta1.%s{}),\n", t.Group, t.Status)
 		}
-		b.WriteString("\t\tSDKStructs: []string{\n")
-		for _, ref := range t.SDKTypes {
-			fmt.Fprintf(&b, "\t\t\t%q,\n", ref)
+		b.WriteString("\t\tSDKMappings: []SDKMapping{\n")
+		for _, mapping := range t.SDKMappings {
+			b.WriteString("\t\t\t{\n")
+			fmt.Fprintf(&b, "\t\t\t\tSDKStruct: %q,\n", mapping.SDKStruct)
+			if strings.TrimSpace(mapping.APISurface) != "" {
+				fmt.Fprintf(&b, "\t\t\t\tAPISurface: %q,\n", mapping.APISurface)
+			}
+			if mapping.Exclude {
+				b.WriteString("\t\t\t\tExclude: true,\n")
+			}
+			if strings.TrimSpace(mapping.Reason) != "" {
+				fmt.Fprintf(&b, "\t\t\t\tReason: %q,\n", mapping.Reason)
+			}
+			b.WriteString("\t\t\t},\n")
 		}
 		b.WriteString("\t\t},\n")
 		b.WriteString("\t},\n")
@@ -721,7 +1022,12 @@ func renderAPIRegistry(targets []specTarget) ([]byte, error) {
 	b.WriteString("}\n\n")
 	b.WriteString("func Targets() []Target {\n")
 	b.WriteString("\tresult := make([]Target, len(targets))\n")
-	b.WriteString("\tcopy(result, targets)\n")
+	b.WriteString("\tfor i := range targets {\n")
+	b.WriteString("\t\tresult[i] = targets[i]\n")
+	b.WriteString("\t\tif len(targets[i].SDKMappings) > 0 {\n")
+	b.WriteString("\t\t\tresult[i].SDKMappings = append([]SDKMapping(nil), targets[i].SDKMappings...)\n")
+	b.WriteString("\t\t}\n")
+	b.WriteString("\t}\n")
 	b.WriteString("\treturn result\n")
 	b.WriteString("}\n")
 

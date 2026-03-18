@@ -14,6 +14,14 @@ type testWidgetSpec struct {
 	Name string `json:"name,omitempty"`
 }
 
+func testSDKMappings(names ...string) []SDKMapping {
+	mappings := make([]SDKMapping, 0, len(names))
+	for _, name := range names {
+		mappings = append(mappings, SDKMapping{SDKStruct: name})
+	}
+	return mappings
+}
+
 func TestBuildReportIncludesUntrackedTargets(t *testing.T) {
 	originalTargets := targets
 	t.Cleanup(func() {
@@ -22,9 +30,9 @@ func TestBuildReportIncludesUntrackedTargets(t *testing.T) {
 
 	targets = []Target{
 		{
-			Name:       "TestWidget",
-			SpecType:   reflect.TypeOf(testWidgetSpec{}),
-			SDKStructs: nil,
+			Name:        "TestWidget",
+			SpecType:    reflect.TypeOf(testWidgetSpec{}),
+			SDKMappings: nil,
 		},
 	}
 
@@ -64,10 +72,10 @@ func TestBuildReportMarksReviewedUntrackedTargetsAsIntentional(t *testing.T) {
 	}
 	targets = []Target{
 		{
-			Name:       "TestWidget",
-			SpecType:   reflect.TypeOf(struct{}{}),
-			StatusType: reflect.TypeOf(struct{}{}),
-			SDKStructs: nil,
+			Name:        "TestWidget",
+			SpecType:    reflect.TypeOf(struct{}{}),
+			StatusType:  reflect.TypeOf(struct{}{}),
+			SDKMappings: nil,
 		},
 	}
 
@@ -121,10 +129,10 @@ func TestBuildReportTracksResponseBodyTargets(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			targets = []Target{
 				{
-					Name:       tt.target,
-					SpecType:   reflect.TypeOf(struct{}{}),
-					StatusType: reflect.TypeOf(struct{}{}),
-					SDKStructs: nil,
+					Name:        tt.target,
+					SpecType:    reflect.TypeOf(struct{}{}),
+					StatusType:  reflect.TypeOf(struct{}{}),
+					SDKMappings: nil,
 				},
 			}
 
@@ -162,6 +170,99 @@ func TestBuildReportTracksResponseBodyTargets(t *testing.T) {
 	}
 }
 
+func TestBuildReportHonorsExplicitMappingSurfaceOverrides(t *testing.T) {
+	originalTargets := targets
+	t.Cleanup(func() {
+		targets = originalTargets
+	})
+
+	type explicitSurfaceStatus struct {
+		OsokStatus testStatusMarker `json:"status,omitempty"`
+		Name       string           `json:"name,omitempty"`
+	}
+
+	targets = []Target{
+		{
+			Name:       "CoreInstance",
+			SpecType:   reflect.TypeOf(testWidgetSpec{}),
+			StatusType: reflect.TypeOf(explicitSurfaceStatus{}),
+			SDKMappings: []SDKMapping{
+				{
+					SDKStruct:  "example.CreateWidgetDetails",
+					APISurface: apiSurfaceStatus,
+				},
+			},
+		},
+	}
+
+	report, err := BuildReport([]sdk.SDKStruct{
+		{
+			QualifiedName: "example.CreateWidgetDetails",
+			Fields: []sdk.SDKField{
+				{Name: "Name", JSONName: "name"},
+			},
+		},
+	}, allowlist.Allowlist{})
+	if err != nil {
+		t.Fatalf("BuildReport() error = %v", err)
+	}
+	if len(report.Structs) != 1 {
+		t.Fatalf("BuildReport() report count = %d, want 1", len(report.Structs))
+	}
+
+	got := report.Structs[0]
+	if got.APISurface != apiSurfaceStatus {
+		t.Fatalf("report.Structs[0].APISurface = %q, want %q", got.APISurface, apiSurfaceStatus)
+	}
+	if len(got.PresentFields) != 1 || got.PresentFields[0].FieldName != "Name" {
+		t.Fatalf("report.Structs[0].PresentFields = %#v, want Name present on explicit status surface", got.PresentFields)
+	}
+}
+
+func TestBuildReportMarksExplicitlyExcludedMappingsAsIntentional(t *testing.T) {
+	originalTargets := targets
+	t.Cleanup(func() {
+		targets = originalTargets
+	})
+
+	targets = []Target{
+		{
+			Name:       "LoadBalancerShape",
+			SpecType:   reflect.TypeOf(struct{}{}),
+			StatusType: reflect.TypeOf(struct{}{}),
+			SDKMappings: []SDKMapping{
+				{
+					SDKStruct: "loadbalancer.UpdateLoadBalancerShapeDetails",
+					Exclude:   true,
+					Reason:    "Intentionally untracked: duplicate desired-state payload is already tracked on LoadBalancerLoadBalancerShape.",
+				},
+			},
+		},
+	}
+
+	report, err := BuildReport(nil, allowlist.Allowlist{})
+	if err != nil {
+		t.Fatalf("BuildReport() error = %v", err)
+	}
+	if len(report.Structs) != 1 {
+		t.Fatalf("BuildReport() report count = %d, want 1", len(report.Structs))
+	}
+
+	got := report.Structs[0]
+	if got.TrackingStatus != TrackingStatusUntracked {
+		t.Fatalf("report.Structs[0].TrackingStatus = %q, want %q", got.TrackingStatus, TrackingStatusUntracked)
+	}
+	if got.APISurface != apiSurfaceExcluded {
+		t.Fatalf("report.Structs[0].APISurface = %q, want %q", got.APISurface, apiSurfaceExcluded)
+	}
+	if !isIntentionalUntrackedReason(got.TrackingReason) {
+		t.Fatalf("report.Structs[0].TrackingReason = %q, want intentional untracked reason", got.TrackingReason)
+	}
+	if HasActionable(report) {
+		t.Fatal("HasActionable() = true, want false for explicitly excluded mapping")
+	}
+}
+
 type testStatusMarker struct{}
 
 type testWidgetStatus struct {
@@ -177,10 +278,10 @@ func TestBuildReportUsesStatusSurfaceForStatusTargets(t *testing.T) {
 
 	targets = []Target{
 		{
-			Name:       "TestReadOnlyWidget",
-			SpecType:   reflect.TypeOf(testWidgetSpec{}),
-			StatusType: reflect.TypeOf(testWidgetStatus{}),
-			SDKStructs: []string{"example.Widget"},
+			Name:        "TestReadOnlyWidget",
+			SpecType:    reflect.TypeOf(testWidgetSpec{}),
+			StatusType:  reflect.TypeOf(testWidgetStatus{}),
+			SDKMappings: testSDKMappings("example.Widget"),
 		},
 	}
 
@@ -222,10 +323,10 @@ func TestBuildReportRoutesDesiredAndObservedSDKStructsToDifferentSurfaces(t *tes
 
 	targets = []Target{
 		{
-			Name:       "TestWidget",
-			SpecType:   reflect.TypeOf(testWidgetSpec{}),
-			StatusType: reflect.TypeOf(testWidgetStatus{}),
-			SDKStructs: []string{"example.CreateWidgetDetails", "example.Widget"},
+			Name:        "TestWidget",
+			SpecType:    reflect.TypeOf(testWidgetSpec{}),
+			StatusType:  reflect.TypeOf(testWidgetStatus{}),
+			SDKMappings: testSDKMappings("example.CreateWidgetDetails", "example.Widget"),
 		},
 	}
 
@@ -277,7 +378,7 @@ func TestEmptyRegistryTargetsHaveSpecialHandling(t *testing.T) {
 
 	var got []string
 	for _, target := range Targets() {
-		if len(target.SDKStructs) != 0 {
+		if len(target.SDKMappings) != 0 {
 			continue
 		}
 		reason := reviewedUntrackedReason(target.Name)
@@ -295,7 +396,7 @@ func TestEmptyRegistryTargetsHaveSpecialHandling(t *testing.T) {
 	for targetName := range reviewedUntrackedReasons {
 		matched := false
 		for _, target := range Targets() {
-			if target.Name == targetName && len(target.SDKStructs) == 0 {
+			if target.Name == targetName && len(target.SDKMappings) == 0 {
 				matched = true
 				break
 			}
@@ -313,7 +414,7 @@ func TestEmptyRegistryTargetsHaveSpecialHandling(t *testing.T) {
 	for targetName := range responseBodyCoverageTargets {
 		matched := false
 		for _, target := range Targets() {
-			if target.Name == targetName && len(target.SDKStructs) == 0 {
+			if target.Name == targetName && len(target.SDKMappings) == 0 {
 				matched = true
 				break
 			}

@@ -80,6 +80,10 @@ func SummarizeAPI(report apispec.Report, topN int) APISummary {
 	extra := make([]Offender, 0, len(report.Structs))
 
 	for _, structReport := range report.Structs {
+		if structReport.APISurface == "excluded" {
+			continue
+		}
+
 		aggregate.add(structReport)
 
 		serviceCounter, ok := byService[structReport.Service]
@@ -153,6 +157,10 @@ func newCounter() *counter {
 }
 
 func (c *counter) add(structReport apispec.StructReport) {
+	if structReport.APISurface == "excluded" {
+		return
+	}
+
 	c.specs[structReport.Service+"."+structReport.Spec] = struct{}{}
 	c.mappings++
 	if structReport.TrackingStatus == apispec.TrackingStatusUntracked {
