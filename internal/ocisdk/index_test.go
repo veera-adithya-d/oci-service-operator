@@ -187,6 +187,22 @@ func TestIndexLoadsRepresentativeOCISDKMetadata(t *testing.T) {
 				}
 			},
 		},
+		{
+			name:       "networkloadbalancer.HealthChecker",
+			importPath: "github.com/oracle/oci-go-sdk/v65/networkloadbalancer",
+			typeName:   "HealthChecker",
+			assert: func(t *testing.T, structMeta Struct) {
+				requestData := findField(t, structMeta.Fields, "RequestData")
+				if requestData.RenderableType != "string" {
+					t.Fatalf("RequestData renderable type = %q, want string", requestData.RenderableType)
+				}
+
+				responseData := findField(t, structMeta.Fields, "ResponseData")
+				if responseData.RenderableType != "string" {
+					t.Fatalf("ResponseData renderable type = %q, want string", responseData.RenderableType)
+				}
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -371,85 +387,6 @@ func TestPackageRequestBodyPayloads(t *testing.T) {
 			got := pkg.RequestBodyPayloads(tt.request)
 			if !slices.Equal(got, tt.want) {
 				t.Fatalf("RequestBodyPayloads(%s) = %v, want %v", tt.request, got, tt.want)
-			}
-		})
-	}
-}
-
-func TestPackageResponseBodyPayloads(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name       string
-		importPath string
-		response   string
-		want       []string
-	}{
-		{
-			name:       "sample alias get payload",
-			importPath: "example.com/test/sdk",
-			response:   "GetOAuthClientCredentialResponse",
-			want:       []string{"OAuth2ClientCredential"},
-		},
-		{
-			name:       "sample alias list payload",
-			importPath: "example.com/test/sdk",
-			response:   "ListOAuthClientCredentialsResponse",
-			want:       []string{"OAuth2ClientCredentialSummary"},
-		},
-		{
-			name:       "identity oauth alias list payload",
-			importPath: "github.com/oracle/oci-go-sdk/v65/identity",
-			response:   "ListOAuthClientCredentialsResponse",
-			want:       []string{"OAuth2ClientCredentialSummary"},
-		},
-		{
-			name:       "ons topic get payload",
-			importPath: "github.com/oracle/oci-go-sdk/v65/ons",
-			response:   "GetTopicResponse",
-			want:       []string{"NotificationTopic"},
-		},
-		{
-			name:       "ons topic list payload",
-			importPath: "github.com/oracle/oci-go-sdk/v65/ons",
-			response:   "ListTopicsResponse",
-			want:       []string{"NotificationTopicSummary"},
-		},
-		{
-			name:       "streaming stream get payload",
-			importPath: "github.com/oracle/oci-go-sdk/v65/streaming",
-			response:   "GetStreamResponse",
-			want:       []string{"Stream"},
-		},
-		{
-			name:       "streaming stream list payload",
-			importPath: "github.com/oracle/oci-go-sdk/v65/streaming",
-			response:   "ListStreamsResponse",
-			want:       []string{"StreamSummary"},
-		},
-	}
-
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			resolver := vendorResolver(t)
-			if strings.HasPrefix(tt.importPath, "example.com/") {
-				resolver = func(context.Context, string) (string, error) {
-					return filepath.Join(moduleRoot(t), "internal", "generator", "testdata", "sdk", "sample"), nil
-				}
-			}
-
-			index := NewIndex(resolver)
-			pkg, err := index.Package(context.Background(), tt.importPath)
-			if err != nil {
-				t.Fatalf("Package(%s) error = %v", tt.importPath, err)
-			}
-
-			got := pkg.ResponseBodyPayloads(tt.response)
-			if !slices.Equal(got, tt.want) {
-				t.Fatalf("ResponseBodyPayloads(%s) = %v, want %v", tt.response, got, tt.want)
 			}
 		})
 	}

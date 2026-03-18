@@ -44,21 +44,6 @@ resources:
         comments:
           - INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
           - 'Important: Run "make" to regenerate code after modifying this file'
-      - name: Id
-        type: string
-        tag: 'json:"id,omitempty"'
-      - name: LifecycleState
-        type: string
-        tag: 'json:"lifecycleState,omitempty"'
-      - name: TimeCreated
-        type: string
-        tag: 'json:"timeCreated,omitempty"'
-      - name: MessagesEndpoint
-        type: string
-        tag: 'json:"messagesEndpoint,omitempty"'
-      - name: LifecycleStateDetails
-        type: string
-        tag: 'json:"lifecycleStateDetails,omitempty"'
     printColumns:
       - name: Streamname
         type: string

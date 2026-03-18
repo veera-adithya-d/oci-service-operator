@@ -113,10 +113,9 @@ func findModuleRoot() (string, error) {
 
 func resourceModels(index *ocisdk.Package, service ServiceConfig) ([]ResourceModel, error) {
 	type candidate struct {
-		rawName              string
-		operations           map[string]struct{}
-		requestBodyPayloads  []string
-		responseBodyPayloads []string
+		rawName             string
+		operations          map[string]struct{}
+		requestBodyPayloads []string
 	}
 
 	candidates := make(map[string]*candidate)
@@ -141,10 +140,6 @@ func resourceModels(index *ocisdk.Package, service ServiceConfig) ([]ResourceMod
 		entry.operations[matches[1]] = struct{}{}
 		if matches[3] == "Request" {
 			entry.requestBodyPayloads = appendUniqueStrings(entry.requestBodyPayloads, index.RequestBodyPayloads(typeName)...)
-			continue
-		}
-		if matches[3] == "Response" {
-			entry.responseBodyPayloads = appendUniqueStrings(entry.responseBodyPayloads, index.ResponseBodyPayloads(typeName)...)
 		}
 	}
 
@@ -167,13 +162,7 @@ func resourceModels(index *ocisdk.Package, service ServiceConfig) ([]ResourceMod
 			compatibilityLocked = true
 		}
 
-		fieldSet := synthesizeResourceFieldSetWithObservedCandidates(
-			index,
-			kind,
-			entry.rawName,
-			desiredStateStructCandidates(entry.rawName, entry.requestBodyPayloads),
-			observedStateStructCandidates(entry.rawName, entry.responseBodyPayloads),
-		)
+		fieldSet := synthesizeResourceFieldSet(index, service, kind, entry.rawName, desiredStateStructCandidates(entry.rawName, entry.requestBodyPayloads))
 		displayField := ""
 		switch {
 		case hasField(fieldSet.SpecFields, "DisplayName"):
@@ -219,19 +208,19 @@ func hasField(fields []FieldModel, name string) bool {
 }
 
 func resourceFields(index *ocisdk.Package, rawName string) ([]FieldModel, []FieldModel) {
-	specFields, desiredJSONNames := mergeStructFields(index, []string{
+	specFields, _ := mergeStructFields(index, []string{
 		"Create" + rawName + "Details",
 		"Update" + rawName + "Details",
 	}, nil, fieldRenderingOptions{scope: fieldScopeSpec})
 
 	statusFields := defaultStatusFields()
 	statusJSONNames := fieldJSONNames(statusFields)
-	observedFields, _ := mergeStructFields(index, observedStateStructCandidates(rawName, nil), nil, fieldRenderingOptions{scope: fieldScopeStatus})
+	observedFields, _ := mergeStructFields(index, []string{
+		rawName,
+		rawName + "Summary",
+	}, nil, fieldRenderingOptions{scope: fieldScopeStatus, escapeStatusJSONCollision: true})
 	for _, field := range observedFields {
 		jsonName := tagJSONName(field.Tag)
-		if _, exists := desiredJSONNames[jsonName]; exists {
-			continue
-		}
 		if _, exists := statusJSONNames[jsonName]; exists {
 			continue
 		}
@@ -250,7 +239,8 @@ const (
 )
 
 type fieldRenderingOptions struct {
-	scope fieldScope
+	scope                     fieldScope
+	escapeStatusJSONCollision bool
 }
 
 func mergeStructFields(index *ocisdk.Package, candidates []string, initial []FieldModel, options fieldRenderingOptions) ([]FieldModel, map[string]struct{}) {
@@ -287,13 +277,26 @@ func mergeStructFields(index *ocisdk.Package, candidates []string, initial []Fie
 }
 
 func buildFieldModel(field ocisdk.Field, jsonName string, options fieldRenderingOptions) FieldModel {
+	renderedJSONName := renderedFieldJSONName(jsonName, options)
+	comments := fieldComments(field)
+	if renderedJSONName != jsonName {
+		comments = append(comments, "This uses a distinct JSON name so it can coexist with the OSOK status envelope.")
+	}
+
 	return FieldModel{
 		Name:     field.Name,
 		Type:     field.RenderableType,
-		Tag:      jsonTag(jsonName, shouldOmitEmpty(field, options)),
-		Comments: fieldComments(field),
+		Tag:      jsonTag(renderedJSONName, shouldOmitEmpty(field, options)),
+		Comments: comments,
 		Markers:  fieldMarkers(field, options),
 	}
+}
+
+func renderedFieldJSONName(jsonName string, options fieldRenderingOptions) string {
+	if options.scope == fieldScopeStatus && options.escapeStatusJSONCollision && strings.TrimSpace(jsonName) == "status" {
+		return "sdkStatus"
+	}
+	return jsonName
 }
 
 func fieldComments(field ocisdk.Field) []string {
