@@ -93,6 +93,18 @@ type OAuth2ClientCredential struct {
 	LifecycleState ModeEnum `mandatory:"false" json:"lifecycleState,omitempty"`
 }
 
+type OAuth2ClientCredentialSummary struct {
+	TimeCreated time.Time `mandatory:"false" json:"timeCreated,omitempty"`
+}
+
+type GetOAuthClientCredentialResponse struct {
+	OAuth2ClientCredential `presentIn:"body"`
+}
+
+type ListOAuthClientCredentialsResponse struct {
+	Items []OAuth2ClientCredentialSummary `presentIn:"body"`
+}
+
 type Report struct {
 	Id             string    `json:"id,omitempty"`
 	LifecycleState ModeEnum  `json:"lifecycleState,omitempty"`

@@ -113,9 +113,10 @@ func findModuleRoot() (string, error) {
 
 func resourceModels(index *ocisdk.Package, service ServiceConfig) ([]ResourceModel, error) {
 	type candidate struct {
-		rawName             string
-		operations          map[string]struct{}
-		requestBodyPayloads []string
+		rawName              string
+		operations           map[string]struct{}
+		requestBodyPayloads  []string
+		responseBodyPayloads []string
 	}
 
 	candidates := make(map[string]*candidate)
@@ -140,6 +141,10 @@ func resourceModels(index *ocisdk.Package, service ServiceConfig) ([]ResourceMod
 		entry.operations[matches[1]] = struct{}{}
 		if matches[3] == "Request" {
 			entry.requestBodyPayloads = appendUniqueStrings(entry.requestBodyPayloads, index.RequestBodyPayloads(typeName)...)
+			continue
+		}
+		if matches[3] == "Response" {
+			entry.responseBodyPayloads = appendUniqueStrings(entry.responseBodyPayloads, index.ResponseBodyPayloads(typeName)...)
 		}
 	}
 
@@ -162,7 +167,13 @@ func resourceModels(index *ocisdk.Package, service ServiceConfig) ([]ResourceMod
 			compatibilityLocked = true
 		}
 
-		fieldSet := synthesizeResourceFieldSet(index, kind, entry.rawName, desiredStateStructCandidates(entry.rawName, entry.requestBodyPayloads))
+		fieldSet := synthesizeResourceFieldSetWithObservedCandidates(
+			index,
+			kind,
+			entry.rawName,
+			desiredStateStructCandidates(entry.rawName, entry.requestBodyPayloads),
+			observedStateStructCandidates(entry.rawName, entry.responseBodyPayloads),
+		)
 		displayField := ""
 		switch {
 		case hasField(fieldSet.SpecFields, "DisplayName"):
@@ -215,10 +226,7 @@ func resourceFields(index *ocisdk.Package, rawName string) ([]FieldModel, []Fiel
 
 	statusFields := defaultStatusFields()
 	statusJSONNames := fieldJSONNames(statusFields)
-	observedFields, _ := mergeStructFields(index, []string{
-		rawName,
-		rawName + "Summary",
-	}, nil, fieldRenderingOptions{scope: fieldScopeStatus})
+	observedFields, _ := mergeStructFields(index, observedStateStructCandidates(rawName, nil), nil, fieldRenderingOptions{scope: fieldScopeStatus})
 	for _, field := range observedFields {
 		jsonName := tagJSONName(field.Tag)
 		if _, exists := desiredJSONNames[jsonName]; exists {

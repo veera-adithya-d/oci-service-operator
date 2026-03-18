@@ -158,6 +158,12 @@ func TestBuildPackageModelDiscoversResources(t *testing.T) {
 	if !hasField(oauthClientCredential.SpecFields, "Scopes") {
 		t.Fatalf("OAuthClientCredential spec fields = %#v, want Scopes from the aliased create/update payloads", oauthClientCredential.SpecFields)
 	}
+	if !hasField(oauthClientCredential.StatusFields, "LifecycleState") {
+		t.Fatalf("OAuthClientCredential status fields = %#v, want LifecycleState from the aliased get response payload", oauthClientCredential.StatusFields)
+	}
+	if !hasField(oauthClientCredential.StatusFields, "TimeCreated") {
+		t.Fatalf("OAuthClientCredential status fields = %#v, want TimeCreated from the aliased list response payload", oauthClientCredential.StatusFields)
+	}
 }
 
 func TestBuildPackageModelSynthesizesComplexSDKFields(t *testing.T) {

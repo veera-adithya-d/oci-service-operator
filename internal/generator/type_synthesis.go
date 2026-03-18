@@ -19,16 +19,17 @@ type resourceFieldSet struct {
 }
 
 func synthesizeResourceFieldSet(index *ocisdk.Package, resourceKind string, rawName string, specCandidates []string) resourceFieldSet {
+	return synthesizeResourceFieldSetWithObservedCandidates(index, resourceKind, rawName, specCandidates, observedStateStructCandidates(rawName, nil))
+}
+
+func synthesizeResourceFieldSetWithObservedCandidates(index *ocisdk.Package, resourceKind string, rawName string, specCandidates []string, observedCandidates []string) resourceFieldSet {
 	synthesizer := newFieldSynthesizer(index, resourceKind)
 
 	specFields, desiredJSONNames := synthesizer.mergeStructFields(specCandidates, nil, fieldRenderingOptions{scope: fieldScopeSpec})
 
 	statusFields := defaultStatusFields()
 	statusJSONNames := fieldJSONNames(statusFields)
-	observedFields, _ := synthesizer.mergeStructFields([]string{
-		rawName,
-		rawName + "Summary",
-	}, nil, fieldRenderingOptions{scope: fieldScopeStatus})
+	observedFields, _ := synthesizer.mergeStructFields(observedCandidates, nil, fieldRenderingOptions{scope: fieldScopeStatus})
 	for _, field := range observedFields {
 		jsonName := tagJSONName(field.Tag)
 		if _, exists := desiredJSONNames[jsonName]; exists {
@@ -53,6 +54,13 @@ func desiredStateStructCandidates(rawName string, requestBodyPayloads []string) 
 		"Create" + rawName + "Details",
 		"Update" + rawName + "Details",
 	}, requestBodyPayloads...)
+}
+
+func observedStateStructCandidates(rawName string, responseBodyPayloads []string) []string {
+	return appendUniqueStrings([]string{
+		rawName,
+		rawName + "Summary",
+	}, responseBodyPayloads...)
 }
 
 type fieldSynthesizer struct {
