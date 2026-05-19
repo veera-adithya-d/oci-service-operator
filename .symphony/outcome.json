@@ -1,0 +1,17 @@
+{
+  "role": "implementation",
+  "resolution": "ready_for_review",
+  "summary": "Implemented resource-local GenericArtifactContent runtime behavior for the get-only Generic Artifacts Content SDK surface.",
+  "details": [
+    "Added a handwritten read-only client that binds by existing status.status.ocid, verifies content with GetGenericArtifactContent, records opcRequestId, and never stores binary content in status.",
+    "Delete now confirms readback or unambiguous not-found before releasing the finalizer, while auth-shaped NotAuthorizedOrNotFound keeps the finalizer; OCI content is left unchanged because this SDK exposes no delete method for the content endpoint.",
+    "Covered missing tracked identity, successful readback, no-op reconcile reread, OCI error request IDs, no-target delete, read-only delete cleanup, unambiguous not-found, and ambiguous not-found."
+  ],
+  "validation": [
+    "env GOCACHE=/tmp/osok-genericartifactscontent-go-cache GOTMPDIR=/tmp go test ./pkg/servicemanager/genericartifactscontent/genericartifactcontent/...: passed",
+    "env GOLANGCI_LINT_CACHE=/tmp/osok-genericartifactscontent-golangci-cache GOCACHE=/tmp/osok-genericartifactscontent-go-cache GOTMPDIR=/tmp golangci-lint run ./pkg/servicemanager/genericartifactscontent/genericartifactcontent/...: passed (0 issues; existing exclusion-pattern warnings only)",
+    "env GOCACHE=/tmp/osok-genericartifactscontent-go-cache GOTMPDIR=/tmp go vet ./pkg/servicemanager/genericartifactscontent/genericartifactcontent/...: passed",
+    "env GOCACHE=/tmp/osok-genericartifactscontent-go-cache GOTMPDIR=/tmp go build -buildvcs=false -o /tmp/manager-genericartifactscontent ./cmd/manager/genericartifactscontent: stopped (optional service build expanded into broad compile; focused package proof passed)",
+    "broad make gates: deferred (diff stayed resource-local)"
+  ]
+}
