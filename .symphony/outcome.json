@@ -1,17 +1,16 @@
 {
   "role": "implementation",
   "resolution": "ready_for_review",
-  "summary": "Implemented resource-local GenericArtifactContent runtime behavior for the get-only Generic Artifacts Content SDK surface.",
+  "summary": "Implemented and rebased resource-local read-only runtime behavior for ocicontrolcenter/MetricProperty.",
   "details": [
-    "Added a handwritten read-only client that binds by existing status.status.ocid, verifies content with GetGenericArtifactContent, records opcRequestId, and never stores binary content in status.",
-    "Delete now confirms readback or unambiguous not-found before releasing the finalizer, while auth-shaped NotAuthorizedOrNotFound keeps the finalizer; OCI content is left unchanged because this SDK exposes no delete method for the content endpoint.",
-    "Covered missing tracked identity, successful readback, no-op reconcile reread, OCI error request IDs, no-target delete, read-only delete cleanup, unambiguous not-found, and ambiguous not-found."
+    "Added a MetricProperty runtime wrapper that binds by required selector annotations, scans all ListMetricProperties pages, projects metric dimensions/status, records a stable synthetic identity, and rejects selector drift before OCI calls.",
+    "Handled the SDK's list-only surface by treating Kubernetes deletion as read-only binding removal with no OCI delete, and added focused tests for bind/readback, pagination, selector fallback, drift rejection, OCI error request IDs, and delete behavior.",
+    "Rebased the implementation onto source head 9225eb67afdf615aac37d138351f2095a0b10b5c."
   ],
   "validation": [
-    "env GOCACHE=/tmp/osok-genericartifactscontent-go-cache GOTMPDIR=/tmp go test ./pkg/servicemanager/genericartifactscontent/genericartifactcontent/...: passed",
-    "env GOLANGCI_LINT_CACHE=/tmp/osok-genericartifactscontent-golangci-cache GOCACHE=/tmp/osok-genericartifactscontent-go-cache GOTMPDIR=/tmp golangci-lint run ./pkg/servicemanager/genericartifactscontent/genericartifactcontent/...: passed (0 issues; existing exclusion-pattern warnings only)",
-    "env GOCACHE=/tmp/osok-genericartifactscontent-go-cache GOTMPDIR=/tmp go vet ./pkg/servicemanager/genericartifactscontent/genericartifactcontent/...: passed",
-    "env GOCACHE=/tmp/osok-genericartifactscontent-go-cache GOTMPDIR=/tmp go build -buildvcs=false -o /tmp/manager-genericartifactscontent ./cmd/manager/genericartifactscontent: stopped (optional service build expanded into broad compile; focused package proof passed)",
-    "broad make gates: deferred (diff stayed resource-local)"
+    "env GOCACHE=/tmp/osok-ocicontrolcenter-go-cache GOTMPDIR=/tmp go test ./pkg/servicemanager/ocicontrolcenter/metricproperty/...: passed",
+    "env GOCACHE=/tmp/osok-ocicontrolcenter-go-cache GOTMPDIR=/tmp go vet ./pkg/servicemanager/ocicontrolcenter/metricproperty/...: passed",
+    "env GOLANGCI_LINT_CACHE=/tmp/osok-ocicontrolcenter-golangci-cache GOCACHE=/tmp/osok-ocicontrolcenter-go-cache GOTMPDIR=/tmp golangci-lint run ./pkg/servicemanager/ocicontrolcenter/metricproperty/...: passed (0 issues; existing exclusion-pattern warnings only)",
+    "broad make gates: deferred to review/final integration because the diff stayed resource-local"
   ]
 }
