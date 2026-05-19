@@ -1240,6 +1240,12 @@ func TestCheckedInConfigIncludesDefaultActiveSelectionMetadata(t *testing.T) {
 		"fleetappsmanagement",
 		"fleetsoftwareupdate",
 		"fusionapps",
+		"genericartifactscontent",
+		"jmsutils",
+		"multicloud",
+		"ocicontrolcenter",
+		"osubbillingschedule",
+		"osuborganizationsubscription",
 	}
 	if !slices.Equal(activeServices, wantActiveServices) {
 		t.Fatalf("DefaultActiveServices() = %v, want %v", activeServices, wantActiveServices)
@@ -1358,6 +1364,12 @@ func TestCheckedInConfigIncludesDefaultActiveSelectionMetadata(t *testing.T) {
 		"fleetappsmanagement",
 		"fleetsoftwareupdate",
 		"fusionapps",
+		"genericartifactscontent",
+		"jmsutils",
+		"multicloud",
+		"ocicontrolcenter",
+		"osubbillingschedule",
+		"osuborganizationsubscription",
 		"vault",
 	)
 	assertServiceSelection(t, services["accessgovernancecp"], true, SelectionModeExplicit, []string{"GovernanceInstance"})
@@ -1470,6 +1482,12 @@ func TestCheckedInConfigIncludesDefaultActiveSelectionMetadata(t *testing.T) {
 	assertServiceSelection(t, services["fleetappsmanagement"], true, SelectionModeExplicit, []string{"CatalogItem", "CompliancePolicyRule", "Fleet", "FleetCredential", "FleetProperty", "FleetResource", "MaintenanceWindow", "Onboarding", "Patch", "PlatformConfiguration", "Property", "Provision", "Runbook", "RunbookVersion", "SchedulerDefinition", "TaskRecord"})
 	assertServiceSelection(t, services["fleetsoftwareupdate"], true, SelectionModeExplicit, []string{"FsuAction", "FsuCollection", "FsuCycle", "FsuDiscovery", "FsuReadinessCheck"})
 	assertServiceSelection(t, services["fusionapps"], true, SelectionModeExplicit, []string{"FusionEnvironment", "FusionEnvironmentFamily", "RefreshActivity", "ServiceAttachment"})
+	assertServiceSelection(t, services["genericartifactscontent"], true, SelectionModeExplicit, []string{"GenericArtifactContent", "GenericArtifactContentByPath"})
+	assertServiceSelection(t, services["jmsutils"], true, SelectionModeExplicit, []string{"AnalyzeApplicationsConfiguration", "JavaMigrationAnalysis", "PerformanceTuningAnalysis", "SubscriptionAcknowledgmentConfiguration", "WorkItem"})
+	assertServiceSelection(t, services["multicloud"], true, SelectionModeExplicit, []string{"ExternalLocationDetailsMetadata", "ExternalLocationMappingMetadata", "ExternalLocationSummariesMetadata", "MultiCloudMetadata", "MulticloudResource", "MulticloudSubscription", "NetworkAnchor", "ResourceAnchor"})
+	assertServiceSelection(t, services["ocicontrolcenter"], true, SelectionModeExplicit, []string{"MetricProperty", "Namespace"})
+	assertServiceSelection(t, services["osubbillingschedule"], true, SelectionModeExplicit, []string{"BillingSchedule"})
+	assertServiceSelection(t, services["osuborganizationsubscription"], true, SelectionModeExplicit, []string{"OrganizationSubscription"})
 	assertServiceSelection(t, services["vault"], false, SelectionModeAll, nil)
 }
 
@@ -2258,6 +2276,12 @@ func TestCheckedInConfigSelectedKindsHaveExplicitAsyncContracts(t *testing.T) {
 		"fleetappsmanagement":          {strategy: AsyncStrategyLifecycle, runtime: AsyncRuntimeGeneratedRuntime},
 		"fleetsoftwareupdate":          {strategy: AsyncStrategyLifecycle, runtime: AsyncRuntimeGeneratedRuntime},
 		"fusionapps":                   {strategy: AsyncStrategyLifecycle, runtime: AsyncRuntimeGeneratedRuntime},
+		"genericartifactscontent":      {strategy: AsyncStrategyLifecycle, runtime: AsyncRuntimeGeneratedRuntime},
+		"jmsutils":                     {strategy: AsyncStrategyLifecycle, runtime: AsyncRuntimeGeneratedRuntime},
+		"multicloud":                   {strategy: AsyncStrategyLifecycle, runtime: AsyncRuntimeGeneratedRuntime},
+		"ocicontrolcenter":             {strategy: AsyncStrategyLifecycle, runtime: AsyncRuntimeGeneratedRuntime},
+		"osubbillingschedule":          {strategy: AsyncStrategyLifecycle, runtime: AsyncRuntimeGeneratedRuntime},
+		"osuborganizationsubscription": {strategy: AsyncStrategyLifecycle, runtime: AsyncRuntimeGeneratedRuntime},
 	}
 
 	targets := defaultActiveExplicitSelectedKindTargets(cfg)

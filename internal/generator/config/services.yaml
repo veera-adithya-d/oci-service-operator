@@ -5756,6 +5756,169 @@ services:
       webhooks:
         strategy: none
 
+  - service: genericartifactscontent
+    sdkPackage: github.com/oracle/oci-go-sdk/v65/genericartifactscontent
+    group: genericartifactscontent
+    version: v1beta1
+    phase: data-and-storage
+    packageProfile: controller-backed
+    selection:
+      enabled: true
+      mode: explicit
+      includeKinds:
+        - GenericArtifactContent
+        - GenericArtifactContentByPath
+    async:
+      strategy: lifecycle
+      runtime: generatedruntime
+      formalClassification: lifecycle
+    generation:
+      controller:
+        strategy: generated
+      serviceManager:
+        strategy: generated
+      registration:
+        strategy: generated
+      webhooks:
+        strategy: none
+
+  - service: jmsutils
+    sdkPackage: github.com/oracle/oci-go-sdk/v65/jmsutils
+    group: jmsutils
+    version: v1beta1
+    phase: eventing-messaging-and-observability
+    packageProfile: controller-backed
+    selection:
+      enabled: true
+      mode: explicit
+      includeKinds:
+        - AnalyzeApplicationsConfiguration
+        - JavaMigrationAnalysis
+        - PerformanceTuningAnalysis
+        - SubscriptionAcknowledgmentConfiguration
+        - WorkItem
+    async:
+      strategy: lifecycle
+      runtime: generatedruntime
+      formalClassification: lifecycle
+    generation:
+      controller:
+        strategy: generated
+      serviceManager:
+        strategy: generated
+      registration:
+        strategy: generated
+      webhooks:
+        strategy: none
+
+  - service: multicloud
+    sdkPackage: github.com/oracle/oci-go-sdk/v65/multicloud
+    group: multicloud
+    version: v1beta1
+    phase: networking-and-infrastructure
+    packageProfile: controller-backed
+    selection:
+      enabled: true
+      mode: explicit
+      includeKinds:
+        - ExternalLocationDetailsMetadata
+        - ExternalLocationMappingMetadata
+        - ExternalLocationSummariesMetadata
+        - MultiCloudMetadata
+        - MulticloudResource
+        - MulticloudSubscription
+        - NetworkAnchor
+        - ResourceAnchor
+    async:
+      strategy: lifecycle
+      runtime: generatedruntime
+      formalClassification: lifecycle
+    generation:
+      controller:
+        strategy: generated
+      serviceManager:
+        strategy: generated
+      registration:
+        strategy: generated
+      webhooks:
+        strategy: none
+
+  - service: ocicontrolcenter
+    sdkPackage: github.com/oracle/oci-go-sdk/v65/ocicontrolcenter
+    group: ocicontrolcenter
+    version: v1beta1
+    phase: eventing-messaging-and-observability
+    packageProfile: controller-backed
+    selection:
+      enabled: true
+      mode: explicit
+      includeKinds:
+        - MetricProperty
+        - Namespace
+    async:
+      strategy: lifecycle
+      runtime: generatedruntime
+      formalClassification: lifecycle
+    generation:
+      controller:
+        strategy: generated
+      serviceManager:
+        strategy: generated
+      registration:
+        strategy: generated
+      webhooks:
+        strategy: none
+
+  - service: osubbillingschedule
+    sdkPackage: github.com/oracle/oci-go-sdk/v65/osubbillingschedule
+    group: osubbillingschedule
+    version: v1beta1
+    phase: data-and-storage
+    packageProfile: controller-backed
+    selection:
+      enabled: true
+      mode: explicit
+      includeKinds:
+        - BillingSchedule
+    async:
+      strategy: lifecycle
+      runtime: generatedruntime
+      formalClassification: lifecycle
+    generation:
+      controller:
+        strategy: generated
+      serviceManager:
+        strategy: generated
+      registration:
+        strategy: generated
+      webhooks:
+        strategy: none
+
+  - service: osuborganizationsubscription
+    sdkPackage: github.com/oracle/oci-go-sdk/v65/osuborganizationsubscription
+    group: osuborganizationsubscription
+    version: v1beta1
+    phase: data-and-storage
+    packageProfile: controller-backed
+    selection:
+      enabled: true
+      mode: explicit
+      includeKinds:
+        - OrganizationSubscription
+    async:
+      strategy: lifecycle
+      runtime: generatedruntime
+      formalClassification: lifecycle
+    generation:
+      controller:
+        strategy: generated
+      serviceManager:
+        strategy: generated
+      registration:
+        strategy: generated
+      webhooks:
+        strategy: none
+
   - service: vault
     sdkPackage: github.com/oracle/oci-go-sdk/v65/vault
     group: vault
