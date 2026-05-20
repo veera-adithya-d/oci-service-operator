@@ -52,6 +52,29 @@ spec:
             type: object
           spec:
             description: JavaMigrationAnalysisSpec defines the desired state of JavaMigrationAnalysis.
+            properties:
+              analysisProjectName:
+                description: Name of the analysis project.
+                type: string
+              compartmentId:
+                description: The OCID of the compartment where the Java Migration
+                  Analysis will be requested.
+                type: string
+              inputApplicationsObjectStoragePaths:
+                description: Object Storage paths to the input application files to
+                  analyze.
+                items:
+                  type: string
+                minItems: 1
+                type: array
+              targetJdkVersion:
+                description: Target JDK version for this Java Migration Analysis.
+                type: string
+            required:
+            - analysisProjectName
+            - compartmentId
+            - inputApplicationsObjectStoragePaths
+            - targetJdkVersion
             type: object
           status:
             description: JavaMigrationAnalysisStatus defines the observed state of

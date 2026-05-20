@@ -5909,6 +5909,55 @@ services:
         strategy: generated
       webhooks:
         strategy: none
+      resources:
+        - kind: JavaMigrationAnalysis
+          specFields:
+            - name: CompartmentId
+              type: string
+              tag: 'json:"compartmentId"'
+              comments:
+                - The OCID of the compartment where the Java Migration Analysis will be requested.
+              markers:
+                - +kubebuilder:validation:Required
+            - name: AnalysisProjectName
+              type: string
+              tag: 'json:"analysisProjectName"'
+              comments:
+                - Name of the analysis project.
+              markers:
+                - +kubebuilder:validation:Required
+            - name: InputApplicationsObjectStoragePaths
+              type: '[]string'
+              tag: 'json:"inputApplicationsObjectStoragePaths"'
+              comments:
+                - Object Storage paths to the input application files to analyze.
+              markers:
+                - +kubebuilder:validation:Required
+                - +kubebuilder:validation:MinItems=1
+            - name: TargetJdkVersion
+              type: string
+              tag: 'json:"targetJdkVersion"'
+              comments:
+                - Target JDK version for this Java Migration Analysis.
+              markers:
+                - +kubebuilder:validation:Required
+          sample:
+            body: |-
+              #
+              # Replace the OCI identifiers and Object Storage paths below before running e2e.
+              # Update metadata.name or spec.analysisProjectName if you want to request a fresh
+              # Java Migration Analysis instead of binding to a matching analysis in the compartment.
+              #
+              apiVersion: jmsutils.oracle.com/v1beta1
+              kind: JavaMigrationAnalysis
+              metadata:
+                name: javamigrationanalysis-sample
+              spec:
+                compartmentId: ocid1.compartment.oc1..exampleuniqueID
+                analysisProjectName: javamigrationanalysis-sample
+                inputApplicationsObjectStoragePaths:
+                  - oci://example-bucket/path/to/application.jar
+                targetJdkVersion: "17"
 
   - service: multicloud
     sdkPackage: github.com/oracle/oci-go-sdk/v65/multicloud

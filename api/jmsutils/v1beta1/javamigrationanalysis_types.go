@@ -14,6 +14,19 @@ import (
 
 // JavaMigrationAnalysisSpec defines the desired state of JavaMigrationAnalysis.
 type JavaMigrationAnalysisSpec struct {
+	// The OCID of the compartment where the Java Migration Analysis will be requested.
+	// +kubebuilder:validation:Required
+	CompartmentId string `json:"compartmentId"`
+	// Name of the analysis project.
+	// +kubebuilder:validation:Required
+	AnalysisProjectName string `json:"analysisProjectName"`
+	// Object Storage paths to the input application files to analyze.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinItems=1
+	InputApplicationsObjectStoragePaths []string `json:"inputApplicationsObjectStoragePaths"`
+	// Target JDK version for this Java Migration Analysis.
+	// +kubebuilder:validation:Required
+	TargetJdkVersion string `json:"targetJdkVersion"`
 }
 
 // JavaMigrationAnalysisCreatedBy defines nested fields for JavaMigrationAnalysis.CreatedBy.
