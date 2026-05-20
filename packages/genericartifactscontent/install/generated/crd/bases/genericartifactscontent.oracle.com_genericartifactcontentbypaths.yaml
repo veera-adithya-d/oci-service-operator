@@ -53,11 +53,67 @@ spec:
           spec:
             description: GenericArtifactContentByPathSpec defines the desired state
               of GenericArtifactContentByPath.
+            properties:
+              artifactPath:
+                description: A user-defined artifact path within the repository.
+                type: string
+              compartmentId:
+                description: The OCID of the compartment that contains the artifact
+                  repository.
+                type: string
+              content:
+                description: A Kubernetes Secret reference containing the artifact
+                  bytes to upload.
+                properties:
+                  secretName:
+                    type: string
+                type: object
+              contentKey:
+                description: The key inside spec.content.secretName that contains
+                  the artifact bytes. Defaults to content.
+                type: string
+              repositoryId:
+                description: The OCID of the repository that owns the artifact content.
+                type: string
+              version:
+                description: A user-defined artifact version string.
+                type: string
             type: object
           status:
             description: GenericArtifactContentByPathStatus defines the observed state
               of GenericArtifactContentByPath.
             properties:
+              artifactPath:
+                description: The observed artifact path used to address the artifact
+                  content.
+                type: string
+              compartmentId:
+                description: The observed compartment OCID returned by OCI.
+                type: string
+              displayName:
+                description: The observed artifact display name returned by OCI.
+                type: string
+              etag:
+                description: The latest observed entity tag for optimistic overwrite
+                  checks.
+                type: string
+              id:
+                description: The OCID of the artifact returned by OCI after upload.
+                type: string
+              lifecycleState:
+                description: The observed artifact lifecycle state returned by OCI.
+                type: string
+              repositoryId:
+                description: The observed repository OCID used to address the artifact
+                  content.
+                type: string
+              sha256:
+                description: The observed SHA256 digest for the artifact content.
+                type: string
+              sizeInBytes:
+                description: The observed artifact size in bytes.
+                format: int64
+                type: integer
               status:
                 properties:
                   async:
@@ -158,6 +214,10 @@ spec:
                     format: date-time
                     type: string
                 type: object
+              version:
+                description: The observed artifact version used to address the artifact
+                  content.
+                type: string
             required:
             - status
             type: object

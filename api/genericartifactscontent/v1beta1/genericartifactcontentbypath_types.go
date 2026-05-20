@@ -14,11 +14,43 @@ import (
 
 // GenericArtifactContentByPathSpec defines the desired state of GenericArtifactContentByPath.
 type GenericArtifactContentByPathSpec struct {
+	// The OCID of the compartment that contains the artifact repository.
+	CompartmentId string `json:"compartmentId,omitempty"`
+	// The OCID of the repository that owns the artifact content.
+	RepositoryId string `json:"repositoryId,omitempty"`
+	// A user-defined artifact path within the repository.
+	ArtifactPath string `json:"artifactPath,omitempty"`
+	// A user-defined artifact version string.
+	Version string `json:"version,omitempty"`
+	// A Kubernetes Secret reference containing the artifact bytes to upload.
+	Content shared.SecretSource `json:"content,omitempty,omitzero"`
+	// The key inside spec.content.secretName that contains the artifact bytes. Defaults to content.
+	ContentKey string `json:"contentKey,omitempty"`
 }
 
 // GenericArtifactContentByPathStatus defines the observed state of GenericArtifactContentByPath.
 type GenericArtifactContentByPathStatus struct {
 	OsokStatus shared.OSOKStatus `json:"status"`
+	// The OCID of the artifact returned by OCI after upload.
+	Id string `json:"id,omitempty"`
+	// The observed repository OCID used to address the artifact content.
+	RepositoryId string `json:"repositoryId,omitempty"`
+	// The observed artifact path used to address the artifact content.
+	ArtifactPath string `json:"artifactPath,omitempty"`
+	// The observed artifact version used to address the artifact content.
+	Version string `json:"version,omitempty"`
+	// The observed artifact display name returned by OCI.
+	DisplayName string `json:"displayName,omitempty"`
+	// The observed compartment OCID returned by OCI.
+	CompartmentId string `json:"compartmentId,omitempty"`
+	// The observed SHA256 digest for the artifact content.
+	Sha256 string `json:"sha256,omitempty"`
+	// The observed artifact size in bytes.
+	SizeInBytes int64 `json:"sizeInBytes,omitempty"`
+	// The observed artifact lifecycle state returned by OCI.
+	LifecycleState string `json:"lifecycleState,omitempty"`
+	// The latest observed entity tag for optimistic overwrite checks.
+	Etag string `json:"etag,omitempty"`
 }
 
 // +kubebuilder:object:root=true

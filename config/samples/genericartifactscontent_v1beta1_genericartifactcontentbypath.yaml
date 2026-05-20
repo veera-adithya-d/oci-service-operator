@@ -7,4 +7,11 @@ apiVersion: genericartifactscontent.oracle.com/v1beta1
 kind: GenericArtifactContentByPath
 metadata:
   name: genericartifactcontentbypath-sample
-spec: {}
+spec:
+  compartmentId: ocid1.compartment.oc1..exampleuniqueID
+  repositoryId: ocid1.repository.oc1..exampleuniqueID
+  artifactPath: project01/my-web-app/artifact-abc
+  version: 1.0.0
+  content:
+    secretName: generic-artifact-content
+  contentKey: content

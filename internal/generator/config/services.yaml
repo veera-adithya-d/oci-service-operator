@@ -5781,6 +5781,105 @@ services:
         strategy: generated
       webhooks:
         strategy: none
+      resources:
+        - kind: GenericArtifactContentByPath
+          controller:
+            extraRBACMarkers:
+              - groups="",resources=secrets,verbs=get;list;watch
+          serviceManager:
+            needsCredentialClient: true
+          specFields:
+            - name: CompartmentId
+              type: string
+              tag: 'json:"compartmentId,omitempty"'
+              comments:
+                - The OCID of the compartment that contains the artifact repository.
+            - name: RepositoryId
+              type: string
+              tag: 'json:"repositoryId,omitempty"'
+              comments:
+                - The OCID of the repository that owns the artifact content.
+            - name: ArtifactPath
+              type: string
+              tag: 'json:"artifactPath,omitempty"'
+              comments:
+                - A user-defined artifact path within the repository.
+            - name: Version
+              type: string
+              tag: 'json:"version,omitempty"'
+              comments:
+                - A user-defined artifact version string.
+            - name: Content
+              type: shared.SecretSource
+              tag: 'json:"content,omitempty,omitzero"'
+              comments:
+                - A Kubernetes Secret reference containing the artifact bytes to upload.
+            - name: ContentKey
+              type: string
+              tag: 'json:"contentKey,omitempty"'
+              comments:
+                - The key inside spec.content.secretName that contains the artifact bytes. Defaults to content.
+          statusFields:
+            - name: Id
+              type: string
+              tag: 'json:"id,omitempty"'
+              comments:
+                - The OCID of the artifact returned by OCI after upload.
+            - name: RepositoryId
+              type: string
+              tag: 'json:"repositoryId,omitempty"'
+              comments:
+                - The observed repository OCID used to address the artifact content.
+            - name: ArtifactPath
+              type: string
+              tag: 'json:"artifactPath,omitempty"'
+              comments:
+                - The observed artifact path used to address the artifact content.
+            - name: Version
+              type: string
+              tag: 'json:"version,omitempty"'
+              comments:
+                - The observed artifact version used to address the artifact content.
+            - name: DisplayName
+              type: string
+              tag: 'json:"displayName,omitempty"'
+              comments:
+                - The observed artifact display name returned by OCI.
+            - name: CompartmentId
+              type: string
+              tag: 'json:"compartmentId,omitempty"'
+              comments:
+                - The observed compartment OCID returned by OCI.
+            - name: Sha256
+              type: string
+              tag: 'json:"sha256,omitempty"'
+              comments:
+                - The observed SHA256 digest for the artifact content.
+            - name: SizeInBytes
+              type: int64
+              tag: 'json:"sizeInBytes,omitempty"'
+              comments:
+                - The observed artifact size in bytes.
+            - name: LifecycleState
+              type: string
+              tag: 'json:"lifecycleState,omitempty"'
+              comments:
+                - The observed artifact lifecycle state returned by OCI.
+            - name: Etag
+              type: string
+              tag: 'json:"etag,omitempty"'
+              comments:
+                - The latest observed entity tag for optimistic overwrite checks.
+          sample:
+            metadataName: genericartifactcontentbypath-sample
+            spec: |2-
+                compartmentId: ocid1.compartment.oc1..exampleuniqueID
+                repositoryId: ocid1.repository.oc1..exampleuniqueID
+                artifactPath: project01/my-web-app/artifact-abc
+                version: 1.0.0
+                content:
+                  secretName: generic-artifact-content
+                contentKey: content
 
   - service: jmsutils
     sdkPackage: github.com/oracle/oci-go-sdk/v65/jmsutils

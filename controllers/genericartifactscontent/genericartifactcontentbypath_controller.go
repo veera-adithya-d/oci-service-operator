@@ -24,6 +24,7 @@ type GenericArtifactContentByPathReconciler struct {
 // +kubebuilder:rbac:groups=genericartifactscontent.oracle.com,resources=genericartifactcontentbypaths/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=genericartifactscontent.oracle.com,resources=genericartifactcontentbypaths/finalizers,verbs=update
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch
 
 // Reconcile is part of the main Kubernetes reconciliation loop.
 func (r *GenericArtifactContentByPathReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
