@@ -1,18 +1,17 @@
 {
   "role": "review",
   "resolution": "approved",
-  "summary": "Approved multicloud/MultiCloudMetadata read-only runtime implementation.",
+  "summary": "Approved the multicloud/ExternalLocationMappingMetadata read-only runtime.",
   "details": [
-    "Reviewed resource-local runtime commits 4056eabe5 and 679b24ed2.",
-    "Verified the vendored multicloud SDK exposes GetMultiCloudMetadata/ListMultiCloudMetadata only, so the read-only observe/bind and unbind-on-delete behavior matches the actual surface.",
-    "Scoped diff stays in pkg/servicemanager/multicloud/multicloudmetadata plus this handoff file; no generated, formal, vendor, CRD, or shared runtime edits were made."
+    "Reviewed commit c33205be9 and the scoped diff under pkg/servicemanager/multicloud/externallocationmappingmetadata; the SDK exposes only list for this resource, and the implementation uses paginated observe/bind with deterministic synthetic identity and drift rejection.",
+    "Verified read-only delete handling, InitError preservation, request-id projection, repeated-page-token protection, and resource-local tests; no generated, vendor, CRD, API, controller, or shared runtime files were changed."
   ],
   "validation": [
-    "env GOCACHE=/tmp/osok-multicloud-go-cache GOTMPDIR=/tmp go test ./pkg/servicemanager/multicloud/multicloudmetadata/...: passed",
-    "env GOLANGCI_LINT_CACHE=/tmp/osok-multicloud-golangci-cache GOCACHE=/tmp/osok-multicloud-go-cache-lint GOTMPDIR=/tmp golangci-lint run --allow-parallel-runners ./pkg/servicemanager/multicloud/multicloudmetadata/...: passed (0 issues; exclusion-pattern warnings only)",
-    "env GOCACHE=/tmp/osok-multicloud-go-cache go clean -cache; env GOCACHE=/tmp/osok-multicloud-go-cache-vet go clean -cache; env GOCACHE=/tmp/osok-multicloud-go-cache-build go clean -cache; env GOCACHE=/tmp/osok-multicloud-go-cache-lint go clean -cache: passed",
-    "env GOCACHE=/tmp/osok-multicloud-go-cache GOTMPDIR=/tmp go vet ./pkg/servicemanager/multicloud/multicloudmetadata/...: passed after cleaning package-local Go caches",
-    "env GOCACHE=/tmp/osok-multicloud-go-cache GOTMPDIR=/tmp go build -buildvcs=false -o /tmp/manager-multicloud-review ./cmd/manager/multicloud: passed after cleaning package-local Go caches",
-    "git diff --check: passed"
+    "env GOCACHE=/tmp/osok-multicloud-go-cache GOTMPDIR=/tmp go test ./pkg/servicemanager/multicloud/externallocationmappingmetadata/...: passed",
+    "env GOLANGCI_LINT_CACHE=/tmp/osok-multicloud-golangci-cache GOCACHE=/tmp/osok-multicloud-go-cache GOTMPDIR=/tmp golangci-lint run --allow-parallel-runners ./pkg/servicemanager/multicloud/externallocationmappingmetadata/...: passed (0 issues; exclusion-pattern warnings only)",
+    "env GOCACHE=/tmp/osok-multicloud-go-cache GOTMPDIR=/tmp go vet ./pkg/servicemanager/multicloud/externallocationmappingmetadata/...: passed",
+    "env GOCACHE=/tmp/osok-multicloud-go-cache GOTMPDIR=/tmp go build -buildvcs=false -o /tmp/manager-multicloud ./cmd/manager/multicloud: passed",
+    "git diff --check 0444968dc..HEAD: passed",
+    "broad make gates: deferred per card guidance because the review diff stayed resource-local"
   ]
 }
