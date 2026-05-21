@@ -69,6 +69,7 @@ import (
 	"github.com/oracle/oci-go-sdk/v65/identity"
 	"github.com/oracle/oci-go-sdk/v65/integration"
 	"github.com/oracle/oci-go-sdk/v65/iot"
+	"github.com/oracle/oci-go-sdk/v65/jmsutils"
 	"github.com/oracle/oci-go-sdk/v65/keymanagement"
 	"github.com/oracle/oci-go-sdk/v65/licensemanager"
 	"github.com/oracle/oci-go-sdk/v65/limits"
@@ -84,11 +85,13 @@ import (
 	"github.com/oracle/oci-go-sdk/v65/marketplaceprivateoffer"
 	"github.com/oracle/oci-go-sdk/v65/marketplacepublisher"
 	"github.com/oracle/oci-go-sdk/v65/monitoring"
+	"github.com/oracle/oci-go-sdk/v65/multicloud"
 	"github.com/oracle/oci-go-sdk/v65/mysql"
 	"github.com/oracle/oci-go-sdk/v65/networkfirewall"
 	"github.com/oracle/oci-go-sdk/v65/networkloadbalancer"
 	"github.com/oracle/oci-go-sdk/v65/nosql"
 	"github.com/oracle/oci-go-sdk/v65/objectstorage"
+	"github.com/oracle/oci-go-sdk/v65/ocicontrolcenter"
 	"github.com/oracle/oci-go-sdk/v65/ocvp"
 	"github.com/oracle/oci-go-sdk/v65/oda"
 	"github.com/oracle/oci-go-sdk/v65/ons"
@@ -97,6 +100,7 @@ import (
 	"github.com/oracle/oci-go-sdk/v65/opsi"
 	"github.com/oracle/oci-go-sdk/v65/optimizer"
 	"github.com/oracle/oci-go-sdk/v65/osmanagementhub"
+	"github.com/oracle/oci-go-sdk/v65/osubbillingschedule"
 	"github.com/oracle/oci-go-sdk/v65/psql"
 	"github.com/oracle/oci-go-sdk/v65/queue"
 	"github.com/oracle/oci-go-sdk/v65/recovery"
@@ -1580,6 +1584,20 @@ var seedTargets = []Target{
 	newTarget("iot", "IotDomainGroupSummary", reflect.TypeOf(iot.IotDomainGroupSummary{})),
 	newTarget("iot", "IotDomainSummary", reflect.TypeOf(iot.IotDomainSummary{})),
 
+	// Jmsutils CRD support
+	newTarget("jmsutils", "UpdateAnalyzeApplicationsConfigurationDetails", reflect.TypeOf(jmsutils.UpdateAnalyzeApplicationsConfigurationDetails{})),
+	newTarget("jmsutils", "UpdateSubscriptionAcknowledgmentConfigurationDetails", reflect.TypeOf(jmsutils.UpdateSubscriptionAcknowledgmentConfigurationDetails{})),
+	newTarget("jmsutils", "AnalyzeApplicationsConfiguration", reflect.TypeOf(jmsutils.AnalyzeApplicationsConfiguration{})),
+	newTarget("jmsutils", "JavaMigrationAnalysis", reflect.TypeOf(jmsutils.JavaMigrationAnalysis{})),
+	newTarget("jmsutils", "JavaMigrationAnalysisCollection", reflect.TypeOf(jmsutils.JavaMigrationAnalysisCollection{})),
+	newTarget("jmsutils", "PerformanceTuningAnalysis", reflect.TypeOf(jmsutils.PerformanceTuningAnalysis{})),
+	newTarget("jmsutils", "PerformanceTuningAnalysisCollection", reflect.TypeOf(jmsutils.PerformanceTuningAnalysisCollection{})),
+	newTarget("jmsutils", "SubscriptionAcknowledgmentConfiguration", reflect.TypeOf(jmsutils.SubscriptionAcknowledgmentConfiguration{})),
+	newTarget("jmsutils", "WorkItemCollection", reflect.TypeOf(jmsutils.WorkItemCollection{})),
+	newTarget("jmsutils", "JavaMigrationAnalysisSummary", reflect.TypeOf(jmsutils.JavaMigrationAnalysisSummary{})),
+	newTarget("jmsutils", "PerformanceTuningAnalysisSummary", reflect.TypeOf(jmsutils.PerformanceTuningAnalysisSummary{})),
+	newTarget("jmsutils", "WorkItemSummary", reflect.TypeOf(jmsutils.WorkItemSummary{})),
+
 	// Licensemanager CRD support
 	newTarget("licensemanager", "CreateLicenseRecordDetails", reflect.TypeOf(licensemanager.CreateLicenseRecordDetails{})),
 	newTarget("licensemanager", "CreateProductLicenseDetails", reflect.TypeOf(licensemanager.CreateProductLicenseDetails{})),
@@ -1720,6 +1738,21 @@ var seedTargets = []Target{
 	newTarget("marketplacepublisher", "ListingSummary", reflect.TypeOf(marketplacepublisher.ListingSummary{})),
 	newTarget("marketplacepublisher", "TermSummary", reflect.TypeOf(marketplacepublisher.TermSummary{})),
 
+	// Multicloud CRD support
+	newTarget("multicloud", "MultiCloudMetadata", reflect.TypeOf(multicloud.MultiCloudMetadata{})),
+	newTarget("multicloud", "MultiCloudMetadataCollection", reflect.TypeOf(multicloud.MultiCloudMetadataCollection{})),
+	newTarget("multicloud", "MulticloudResourceCollection", reflect.TypeOf(multicloud.MulticloudResourceCollection{})),
+	newTarget("multicloud", "MulticloudSubscriptionCollection", reflect.TypeOf(multicloud.MulticloudSubscriptionCollection{})),
+	newTarget("multicloud", "NetworkAnchor", reflect.TypeOf(multicloud.NetworkAnchor{})),
+	newTarget("multicloud", "NetworkAnchorCollection", reflect.TypeOf(multicloud.NetworkAnchorCollection{})),
+	newTarget("multicloud", "ResourceAnchor", reflect.TypeOf(multicloud.ResourceAnchor{})),
+	newTarget("multicloud", "ResourceAnchorCollection", reflect.TypeOf(multicloud.ResourceAnchorCollection{})),
+	newTarget("multicloud", "MultiCloudMetadataSummary", reflect.TypeOf(multicloud.MultiCloudMetadataSummary{})),
+	newTarget("multicloud", "MulticloudResourceSummary", reflect.TypeOf(multicloud.MulticloudResourceSummary{})),
+	newTarget("multicloud", "MulticloudSubscriptionSummary", reflect.TypeOf(multicloud.MulticloudSubscriptionSummary{})),
+	newTarget("multicloud", "NetworkAnchorSummary", reflect.TypeOf(multicloud.NetworkAnchorSummary{})),
+	newTarget("multicloud", "ResourceAnchorSummary", reflect.TypeOf(multicloud.ResourceAnchorSummary{})),
+
 	// Networkfirewall CRD support
 	newTarget("networkfirewall", "CreateAddressListDetails", reflect.TypeOf(networkfirewall.CreateAddressListDetails{})),
 	newTarget("networkfirewall", "CreateApplicationGroupDetails", reflect.TypeOf(networkfirewall.CreateApplicationGroupDetails{})),
@@ -1757,6 +1790,12 @@ var seedTargets = []Target{
 	newTarget("networkfirewall", "ServiceListSummary", reflect.TypeOf(networkfirewall.ServiceListSummary{})),
 	newTarget("networkfirewall", "ServiceSummary", reflect.TypeOf(networkfirewall.ServiceSummary{})),
 	newTarget("networkfirewall", "UrlListSummary", reflect.TypeOf(networkfirewall.UrlListSummary{})),
+
+	// Ocicontrolcenter CRD support
+	newTarget("ocicontrolcenter", "MetricPropertyCollection", reflect.TypeOf(ocicontrolcenter.MetricPropertyCollection{})),
+	newTarget("ocicontrolcenter", "NamespaceCollection", reflect.TypeOf(ocicontrolcenter.NamespaceCollection{})),
+	newTarget("ocicontrolcenter", "MetricPropertySummary", reflect.TypeOf(ocicontrolcenter.MetricPropertySummary{})),
+	newTarget("ocicontrolcenter", "NamespaceSummary", reflect.TypeOf(ocicontrolcenter.NamespaceSummary{})),
 
 	// Opensearch CRD support
 	newTarget("opensearch", "CreateOpensearchClusterDetails", reflect.TypeOf(opensearch.CreateOpensearchClusterDetails{})),
@@ -1866,6 +1905,9 @@ var seedTargets = []Target{
 	newTarget("osmanagementhub", "ManagementStationSummary", reflect.TypeOf(osmanagementhub.ManagementStationSummary{})),
 	newTarget("osmanagementhub", "ProfileSummary", reflect.TypeOf(osmanagementhub.ProfileSummary{})),
 	newTarget("osmanagementhub", "ScheduledJobSummary", reflect.TypeOf(osmanagementhub.ScheduledJobSummary{})),
+
+	// Osubbillingschedule CRD support
+	newTarget("osubbillingschedule", "BillingScheduleSummary", reflect.TypeOf(osubbillingschedule.BillingScheduleSummary{})),
 
 	// Recovery CRD support
 	newTarget("recovery", "CreateProtectedDatabaseDetails", reflect.TypeOf(recovery.CreateProtectedDatabaseDetails{})),

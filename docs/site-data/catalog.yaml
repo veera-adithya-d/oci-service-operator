@@ -683,6 +683,13 @@ packages:
     customerVisible: false
     guidePath: docs/installation.md
 
+  - package: genericartifactscontent
+    displayName: Generic Artifacts Content
+    summary: Manage OCI Generic Artifacts Content resources from Kubernetes with a generatedruntime staging baseline.
+    supportStatus: preview
+    customerVisible: false
+    guidePath: docs/installation.md
+
   - package: goldengate
     displayName: GoldenGate
     summary: Manage OCI GoldenGate resources from Kubernetes with a generatedruntime staging baseline.
@@ -738,6 +745,13 @@ packages:
   - package: iot
     displayName: IoT
     summary: Manage OCI IoT resources from Kubernetes.
+    supportStatus: preview
+    customerVisible: false
+    guidePath: docs/installation.md
+
+  - package: jmsutils
+    displayName: JMS Utils
+    summary: Manage OCI Java Management Service utility resources from Kubernetes with a generatedruntime staging baseline.
     supportStatus: preview
     customerVisible: false
     guidePath: docs/installation.md
@@ -864,6 +878,13 @@ packages:
     customerVisible: false
     guidePath: docs/installation.md
 
+  - package: multicloud
+    displayName: Multicloud
+    summary: Manage OCI Multicloud resources from Kubernetes with a generatedruntime staging baseline.
+    supportStatus: preview
+    customerVisible: false
+    guidePath: docs/installation.md
+
   - package: mysql
     displayName: MySQL
     summary: Manage OCI MySQL DB Systems from Kubernetes.
@@ -928,6 +949,13 @@ packages:
       - group: objectstorage
         kind: Bucket
         summary: Manage OCI Object Storage buckets.
+
+  - package: ocicontrolcenter
+    displayName: OCI Control Center
+    summary: Manage OCI Control Center resources from Kubernetes with a generatedruntime staging baseline.
+    supportStatus: preview
+    customerVisible: false
+    guidePath: docs/installation.md
 
   - package: ocvp
     displayName: Oracle Cloud VMware Solution
@@ -994,6 +1022,20 @@ packages:
   - package: osmanagementhub
     displayName: OS Management Hub
     summary: Manage OCI OS Management Hub resources from Kubernetes.
+    supportStatus: preview
+    customerVisible: false
+    guidePath: docs/installation.md
+
+  - package: osubbillingschedule
+    displayName: Oracle Subscription Billing Schedule
+    summary: Manage OCI Oracle Subscription billing schedules from Kubernetes with a generatedruntime staging baseline.
+    supportStatus: preview
+    customerVisible: false
+    guidePath: docs/installation.md
+
+  - package: osuborganizationsubscription
+    displayName: Oracle Subscription Organization Subscription
+    summary: Manage OCI Oracle Subscription organization subscriptions from Kubernetes with a generatedruntime staging baseline.
     supportStatus: preview
     customerVisible: false
     guidePath: docs/installation.md
