@@ -831,6 +831,7 @@ func TestServiceConfigControllerGenerationConfigFor(t *testing.T) {
 						ExtraRBACMarkers: []string{
 							`groups="",resources=secrets,verbs=get;list;watch`,
 						},
+						ReconcilePredicate: "dbSystemReconcilePredicate",
 					},
 				},
 			},
@@ -851,12 +852,18 @@ func TestServiceConfigControllerGenerationConfigFor(t *testing.T) {
 	if !slices.Equal(config.ExtraRBACMarkers, []string{`groups="",resources=secrets,verbs=get;list;watch`}) {
 		t.Fatalf("ControllerGenerationConfigFor(DbSystem).ExtraRBACMarkers = %v", config.ExtraRBACMarkers)
 	}
+	if config.ReconcilePredicate != "dbSystemReconcilePredicate" {
+		t.Fatalf("ControllerGenerationConfigFor(DbSystem).ReconcilePredicate = %q, want dbSystemReconcilePredicate", config.ReconcilePredicate)
+	}
 
 	if got := service.ControllerGenerationStrategyFor("Widget"); got != GenerationStrategyManual {
 		t.Fatalf("ControllerGenerationStrategyFor(Widget) = %q, want %q", got, GenerationStrategyManual)
 	}
 	if got := service.ControllerGenerationConfigFor("Widget"); got.Strategy != GenerationStrategyManual {
 		t.Fatalf("ControllerGenerationConfigFor(Widget).Strategy = %q, want %q", got.Strategy, GenerationStrategyManual)
+	}
+	if got := service.ControllerGenerationConfigFor("Widget"); got.ReconcilePredicate != "core.ReconcilePredicate" {
+		t.Fatalf("ControllerGenerationConfigFor(Widget).ReconcilePredicate = %q, want core.ReconcilePredicate", got.ReconcilePredicate)
 	}
 }
 
@@ -1042,6 +1049,20 @@ func TestValidateRejectsInvalidGenerationConfig(t *testing.T) {
 				}
 			},
 			wantErr: "extraRBACMarkers contains a blank marker",
+		},
+		{
+			name: "invalid reconcile predicate selector",
+			mutate: func(cfg *Config) {
+				cfg.Services[0].Generation.Resources = []ResourceGenerationOverride{
+					{
+						Kind: "DbSystem",
+						Controller: ControllerGenerationOverride{
+							ReconcilePredicate: "dbSystemReconcilePredicate()",
+						},
+					},
+				}
+			},
+			wantErr: "controller.reconcilePredicate must be a Go identifier or selector",
 		},
 		{
 			name: "invalid package path",

@@ -1,17 +1,22 @@
 {
   "role": "review",
   "resolution": "approved",
-  "summary": "Approved the multicloud/ExternalLocationMappingMetadata read-only runtime.",
+  "summary": "Approved the ExternalLocationSummariesMetadata runtime after scoped review and focused validation.",
   "details": [
-    "Reviewed commit c33205be9 and the scoped diff under pkg/servicemanager/multicloud/externallocationmappingmetadata; the SDK exposes only list for this resource, and the implementation uses paginated observe/bind with deterministic synthetic identity and drift rejection.",
-    "Verified read-only delete handling, InitError preservation, request-id projection, repeated-page-token protection, and resource-local tests; no generated, vendor, CRD, API, controller, or shared runtime files were changed."
+    "Verified the vendored multicloud MetadataClient exposes only ListExternalLocationSummariesMetadata, so the read-only list-backed runtime is the correct lifecycle model for this SDK surface.",
+    "Reviewed the resource-local runtime, annotation-driven list filters, pagination, opcRequestId/error status projection, no-op delete handling, controller annotation predicate, and generator predicate support.",
+    "Generator idempotence for multicloud produced no additional tracked diff beyond replacing this review outcome file."
   ],
   "validation": [
-    "env GOCACHE=/tmp/osok-multicloud-go-cache GOTMPDIR=/tmp go test ./pkg/servicemanager/multicloud/externallocationmappingmetadata/...: passed",
-    "env GOLANGCI_LINT_CACHE=/tmp/osok-multicloud-golangci-cache GOCACHE=/tmp/osok-multicloud-go-cache GOTMPDIR=/tmp golangci-lint run --allow-parallel-runners ./pkg/servicemanager/multicloud/externallocationmappingmetadata/...: passed (0 issues; exclusion-pattern warnings only)",
-    "env GOCACHE=/tmp/osok-multicloud-go-cache GOTMPDIR=/tmp go vet ./pkg/servicemanager/multicloud/externallocationmappingmetadata/...: passed",
+    "bd show oci-service-operator-d8a.10 --json: blocked (Dolt server unreachable at 127.0.0.1:13858; port held by non-dolt PID 85431); review used Taiga card text as issue contract",
+    "env GOCACHE=/tmp/osok-multicloud-go-cache GOTMPDIR=/tmp go test ./pkg/servicemanager/multicloud/externallocationsummariesmetadata/...: passed",
+    "env GOLANGCI_LINT_CACHE=/tmp/osok-multicloud-golangci-cache GOCACHE=/tmp/osok-multicloud-go-cache GOTMPDIR=/tmp golangci-lint run --allow-parallel-runners ./pkg/servicemanager/multicloud/externallocationsummariesmetadata/...: passed (0 issues; exclusion-pattern warnings only)",
+    "env GOCACHE=/tmp/osok-multicloud-go-cache GOTMPDIR=/tmp go vet ./pkg/servicemanager/multicloud/externallocationsummariesmetadata/...: passed",
+    "env GOCACHE=/tmp/osok-multicloud-go-cache GOTMPDIR=/tmp go test ./controllers/multicloud/...: passed",
+    "env GOCACHE=/tmp/osok-multicloud-go-cache GOTMPDIR=/tmp go test ./internal/generator -run 'TestServiceConfigControllerGenerationConfigFor|TestValidateRejectsInvalidGenerationConfig|TestGenerateRendersControllerOutputs': passed",
     "env GOCACHE=/tmp/osok-multicloud-go-cache GOTMPDIR=/tmp go build -buildvcs=false -o /tmp/manager-multicloud ./cmd/manager/multicloud: passed",
-    "git diff --check 0444968dc..HEAD: passed",
-    "broad make gates: deferred per card guidance because the review diff stayed resource-local"
+    "env GOCACHE=/tmp/osok-multicloud-go-cache GOTMPDIR=/tmp go run ./cmd/generator --config internal/generator/config/services.yaml --service multicloud --overwrite: passed",
+    "git diff --check services/group-c-services...HEAD: passed",
+    "broad make fmt/make vet/make test/make build: deferred per card scope; review ran focused runtime, controller, generator, and service-manager wiring proof instead"
   ]
 }

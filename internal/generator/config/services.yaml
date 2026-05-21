@@ -5990,6 +5990,25 @@ services:
         strategy: generated
       webhooks:
         strategy: none
+      resources:
+        - kind: ExternalLocationSummariesMetadata
+          controller:
+            reconcilePredicate: externalLocationSummariesMetadataReconcilePredicate
+          sample:
+            body: |-
+              #
+              # Replace the multicloud base compartment OCID below before applying.
+              # The list-only OCI metadata API requires query filters; this CRD carries
+              # them as annotations because the generated spec has no request fields.
+              #
+              apiVersion: multicloud.oracle.com/v1beta1
+              kind: ExternalLocationSummariesMetadata
+              metadata:
+                name: externallocationsummariesmetadata-sample
+                annotations:
+                  multicloud.oracle.com/subscription-service-name: ORACLEDBATAZURE
+                  multicloud.oracle.com/compartment-id: ocid1.compartment.oc1..exampleuniqueID
+              spec: {}
 
   - service: ocicontrolcenter
     sdkPackage: github.com/oracle/oci-go-sdk/v65/ocicontrolcenter

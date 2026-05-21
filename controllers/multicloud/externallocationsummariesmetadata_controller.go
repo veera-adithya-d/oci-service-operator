@@ -36,6 +36,6 @@ func (r *ExternalLocationSummariesMetadataReconciler) SetupWithManager(mgr ctrl.
 	builder := ctrl.NewControllerManagedBy(mgr).
 		For(&multicloudv1beta1.ExternalLocationSummariesMetadata{})
 	return builder.
-		WithEventFilter(core.ReconcilePredicate()).
+		WithEventFilter(externalLocationSummariesMetadataReconcilePredicate()).
 		Complete(r)
 }
