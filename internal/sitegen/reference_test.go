@@ -28,8 +28,8 @@ func TestBuildReferenceSiteUsesReleaseAndPackageFallbackData(t *testing.T) {
 	if !identity.CustomerVisible {
 		t.Fatalf("identity customerVisible = false, want true")
 	}
-	if identity.LatestReleaseVersion != "v2.0.0-alpha" {
-		t.Fatalf("identity latest release = %q, want %q", identity.LatestReleaseVersion, "v2.0.0-alpha")
+	if identity.LatestReleaseVersion != "v2.1.0-alpha" {
+		t.Fatalf("identity latest release = %q, want %q", identity.LatestReleaseVersion, "v2.1.0-alpha")
 	}
 	if len(identity.Resources) != 1 {
 		t.Fatalf("identity resources = %d, want 1", len(identity.Resources))
@@ -149,7 +149,7 @@ func TestGenerateReferenceDocsGroupsResourceGuideSidebarUnderUmbrella(t *testing
 	config := string(mkdocsConfig)
 
 	assertContains(t, config, "  - Resource Guides:\n      - Overview: guides/index.md\n      - Troubleshooting: TROUBLESHOOT.md\n")
-	assertContains(t, config, "      - By Service and Resource:\n          - apigateway:\n              - ApiGateway: guides/apigateway/apigateway.md\n")
+	assertContains(t, config, "      - By Service and Resource:\n          - aidocument:\n              - Project: guides/aidocument/project.md\n")
 }
 
 func TestGenerateReferenceDocsKeepsAPISidebarCustomerVisible(t *testing.T) {
